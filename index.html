@@ -122,6 +122,55 @@
             border-color: #667eea;
         }
         
+        .keyword-section {
+            margin-bottom: 15px;
+        }
+        
+        .keyword-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .keyword-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333;
+            user-select: none;
+        }
+        
+        .keyword-tag:hover {
+            background: #e0e0e0;
+            border-color: #667eea;
+        }
+        
+        .keyword-tag.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .keyword-tag .count {
+            margin-left: 4px;
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+        
         .file-tree-container {
             flex: 1;
             overflow-y: auto;
@@ -499,6 +548,10 @@
                         <option value="size-desc">按大小 ↓</option>
                     </select>
                 </div>
+                <div class="keyword-section">
+                    <div class="keyword-title">🏷️ 关键词筛选</div>
+                    <div id="keywordTags" class="keyword-tags"></div>
+                </div>
             </div>
             <div class="file-tree-container">
                 <div id="loading" class="loading">正在加载文件列表...</div>
@@ -565,6 +618,9 @@
         let currentFile = null;
         let filteredFiles = [];
         let sortOrder = 'name-asc';
+        let fileKeywords = {}; // 文件路径 -> 关键词数组
+        let allKeywords = {}; // 关键词 -> 文件数量
+        let selectedKeywords = new Set(); // 选中的关键词
         
         // 构建文件树结构
         function buildFileTree(files) {
@@ -634,6 +690,105 @@
                 const fileName = file.path.split('/').pop().toLowerCase();
                 const filePath = file.path.toLowerCase();
                 return fileName.includes(lowerQuery) || filePath.includes(lowerQuery);
+            });
+        }
+        
+        // 解析文件关键词
+        async function extractKeywords(file) {
+            try {
+                const repoInfo = getRepoInfo();
+                const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${file.path}`;
+                
+                const response = await fetch(rawUrl);
+                if (!response.ok) return [];
+                
+                const text = await response.text();
+                const keywordMatch = text.match(/##\s*关键词\s*\n\s*\n(.*?)(?:\n##|\n---|$)/s);
+                
+                if (keywordMatch) {
+                    const keywordLine = keywordMatch[1].trim();
+                    const keywords = keywordLine.split(',').map(k => k.trim()).filter(k => k);
+                    return keywords;
+                }
+                return [];
+            } catch (error) {
+                console.error(`Error extracting keywords from ${file.path}:`, error);
+                return [];
+            }
+        }
+        
+        // 提取所有文件的关键词
+        async function extractAllKeywords() {
+            fileKeywords = {};
+            allKeywords = {};
+            
+            // 批量提取关键词（限制并发数）
+            const batchSize = 10;
+            for (let i = 0; i < allFiles.length; i += batchSize) {
+                const batch = allFiles.slice(i, i + batchSize);
+                const results = await Promise.all(batch.map(file => extractKeywords(file)));
+                
+                batch.forEach((file, index) => {
+                    const keywords = results[index];
+                    fileKeywords[file.path] = keywords;
+                    
+                    keywords.forEach(keyword => {
+                        if (!allKeywords[keyword]) {
+                            allKeywords[keyword] = 0;
+                        }
+                        allKeywords[keyword]++;
+                    });
+                });
+            }
+            
+            // 渲染关键词标签
+            renderKeywordTags();
+        }
+        
+        // 渲染关键词标签
+        function renderKeywordTags() {
+            const keywordTagsEl = document.getElementById('keywordTags');
+            keywordTagsEl.innerHTML = '';
+            
+            const sortedKeywords = Object.entries(allKeywords)
+                .sort((a, b) => b[1] - a[1]); // 按文件数量排序
+            
+            sortedKeywords.forEach(([keyword, count]) => {
+                const tag = document.createElement('span');
+                tag.className = 'keyword-tag';
+                if (selectedKeywords.has(keyword)) {
+                    tag.classList.add('active');
+                }
+                tag.textContent = `${keyword} `;
+                
+                const countSpan = document.createElement('span');
+                countSpan.className = 'count';
+                countSpan.textContent = `(${count})`;
+                tag.appendChild(countSpan);
+                
+                tag.addEventListener('click', () => {
+                    if (selectedKeywords.has(keyword)) {
+                        selectedKeywords.delete(keyword);
+                        tag.classList.remove('active');
+                    } else {
+                        selectedKeywords.add(keyword);
+                        tag.classList.add('active');
+                    }
+                    updateFileList();
+                });
+                
+                keywordTagsEl.appendChild(tag);
+            });
+        }
+        
+        // 根据关键词过滤文件
+        function filterByKeywords(files) {
+            if (selectedKeywords.size === 0) return files;
+            
+            return files.filter(file => {
+                const keywords = fileKeywords[file.path] || [];
+                // 文件必须包含所有选中的关键词（AND 逻辑）
+                return Array.from(selectedKeywords).every(keyword => keywords.includes(keyword));
             });
         }
         
@@ -722,14 +877,17 @@
             
             fileTreeEl.innerHTML = '';
             
+            // 先根据关键词过滤
+            let filesToShow = filterByKeywords(allFiles);
+            
             if (searchQuery) {
                 // 搜索模式：显示扁平列表
-                filteredFiles = filterFiles(allFiles, searchQuery);
+                filteredFiles = filterFiles(filesToShow, searchQuery);
                 filteredFiles = sortFiles(filteredFiles, sortOrder);
                 renderFileList(filteredFiles, fileTreeEl);
             } else {
                 // 正常模式：显示树形结构
-                fileTree = buildFileTree(allFiles);
+                fileTree = buildFileTree(filesToShow);
                 renderFileTree(fileTree, fileTreeEl);
             }
         }
@@ -766,6 +924,11 @@
                 // 隐藏加载提示，显示文件树
                 loadingEl.style.display = 'none';
                 fileTreeEl.style.display = 'block';
+                
+                // 提取关键词（异步，不阻塞文件列表显示）
+                extractAllKeywords().then(() => {
+                    updateFileList();
+                });
                 
                 updateFileList();
                 
