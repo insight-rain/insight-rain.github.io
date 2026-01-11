@@ -171,6 +171,79 @@
             font-size: 0.9em;
         }
         
+        .date-section {
+            margin-bottom: 15px;
+        }
+        
+        .date-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        
+        .date-select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            background: white;
+        }
+        
+        .date-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .date-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
+            background: white;
+        }
+        
+        .date-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .date-item:last-child {
+            border-bottom: none;
+        }
+        
+        .date-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .date-item.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .date-label {
+            font-size: 0.85em;
+        }
+        
+        .date-count {
+            font-size: 0.75em;
+            opacity: 0.7;
+            padding: 2px 6px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        
+        .date-item.active .date-count {
+            background: rgba(255,255,255,0.3);
+        }
+        
         .file-tree-container {
             flex: 1;
             overflow-y: auto;
@@ -552,6 +625,10 @@
                     <div class="keyword-title">🏷️ 关键词筛选</div>
                     <div id="keywordTags" class="keyword-tags"></div>
                 </div>
+                <div class="date-section">
+                    <div class="date-title">📅 日期索引</div>
+                    <div id="dateList" class="date-list"></div>
+                </div>
             </div>
             <div class="file-tree-container">
                 <div id="loading" class="loading">正在加载文件列表...</div>
@@ -621,6 +698,9 @@
         let fileKeywords = {}; // 文件路径 -> 关键词数组
         let allKeywords = {}; // 关键词 -> 文件数量
         let selectedKeywords = new Set(); // 选中的关键词
+        let fileDates = {}; // 文件路径 -> 日期字符串
+        let dateGroups = {}; // 日期（YYYY-MM-DD） -> 文件数量
+        let selectedDate = null; // 选中的日期
         
         // 构建文件树结构
         function buildFileTree(files) {
@@ -693,56 +773,85 @@
             });
         }
         
-        // 解析文件关键词
-        async function extractKeywords(file) {
+        // 解析文件关键词和日期
+        async function extractFileMetadata(file) {
             try {
                 const repoInfo = getRepoInfo();
                 const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${file.path}`;
                 
                 const response = await fetch(rawUrl);
-                if (!response.ok) return [];
+                if (!response.ok) return { keywords: [], date: null };
                 
                 const text = await response.text();
-                const keywordMatch = text.match(/##\s*关键词\s*\n\s*\n(.*?)(?:\n##|\n---|$)/s);
                 
+                // 提取关键词
+                const keywordMatch = text.match(/##\s*关键词\s*\n\s*\n(.*?)(?:\n##|\n---|$)/s);
+                let keywords = [];
                 if (keywordMatch) {
                     const keywordLine = keywordMatch[1].trim();
-                    const keywords = keywordLine.split(',').map(k => k.trim()).filter(k => k);
-                    return keywords;
+                    keywords = keywordLine.split(',').map(k => k.trim()).filter(k => k);
                 }
-                return [];
+                
+                // 提取日期
+                const dateMatch = text.match(/\*\*发布时间\*\*:\s*(\d{4}-\d{2}-\d{2})/);
+                let date = null;
+                if (dateMatch) {
+                    date = dateMatch[1]; // YYYY-MM-DD
+                }
+                
+                return { keywords, date };
             } catch (error) {
-                console.error(`Error extracting keywords from ${file.path}:`, error);
-                return [];
+                console.error(`Error extracting metadata from ${file.path}:`, error);
+                return { keywords: [], date: null };
             }
         }
         
-        // 提取所有文件的关键词
-        async function extractAllKeywords() {
+        // 解析文件关键词（向后兼容）
+        async function extractKeywords(file) {
+            const metadata = await extractFileMetadata(file);
+            return metadata.keywords;
+        }
+        
+        // 提取所有文件的关键词和日期
+        async function extractAllMetadata() {
             fileKeywords = {};
             allKeywords = {};
+            fileDates = {};
+            dateGroups = {};
             
-            // 批量提取关键词（限制并发数）
+            // 批量提取元数据（限制并发数）
             const batchSize = 10;
             for (let i = 0; i < allFiles.length; i += batchSize) {
                 const batch = allFiles.slice(i, i + batchSize);
-                const results = await Promise.all(batch.map(file => extractKeywords(file)));
+                const results = await Promise.all(batch.map(file => extractFileMetadata(file)));
                 
                 batch.forEach((file, index) => {
-                    const keywords = results[index];
+                    const { keywords, date } = results[index];
                     fileKeywords[file.path] = keywords;
+                    fileDates[file.path] = date;
                     
+                    // 统计关键词
                     keywords.forEach(keyword => {
                         if (!allKeywords[keyword]) {
                             allKeywords[keyword] = 0;
                         }
                         allKeywords[keyword]++;
                     });
+                    
+                    // 统计日期
+                    if (date) {
+                        if (!dateGroups[date]) {
+                            dateGroups[date] = 0;
+                        }
+                        dateGroups[date]++;
+                    }
                 });
             }
             
             // 渲染关键词标签
             renderKeywordTags();
+            // 渲染日期索引
+            renderDateIndex();
         }
         
         // 渲染关键词标签
@@ -789,6 +898,91 @@
                 const keywords = fileKeywords[file.path] || [];
                 // 文件必须包含所有选中的关键词（AND 逻辑）
                 return Array.from(selectedKeywords).every(keyword => keywords.includes(keyword));
+            });
+        }
+        
+        // 根据日期过滤文件
+        function filterByDate(files) {
+            if (!selectedDate) return files;
+            
+            return files.filter(file => {
+                const fileDate = fileDates[file.path];
+                return fileDate === selectedDate;
+            });
+        }
+        
+        // 渲染日期索引
+        function renderDateIndex() {
+            const dateListEl = document.getElementById('dateList');
+            dateListEl.innerHTML = '';
+            
+            // 添加"全部"选项
+            const allItem = document.createElement('div');
+            allItem.className = 'date-item';
+            if (!selectedDate) {
+                allItem.classList.add('active');
+            }
+            allItem.innerHTML = `
+                <span class="date-label">全部</span>
+                <span class="date-count">${allFiles.length}</span>
+            `;
+            allItem.addEventListener('click', () => {
+                selectedDate = null;
+                updateDateList();
+                updateFileList();
+            });
+            dateListEl.appendChild(allItem);
+            
+            // 按日期排序（从新到旧）
+            const sortedDates = Object.entries(dateGroups)
+                .sort((a, b) => b[0].localeCompare(a[0]));
+            
+            sortedDates.forEach(([date, count]) => {
+                const item = document.createElement('div');
+                item.className = 'date-item';
+                if (selectedDate === date) {
+                    item.classList.add('active');
+                }
+                
+                // 格式化日期显示
+                const dateObj = new Date(date + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                item.innerHTML = `
+                    <span class="date-label">${formattedDate}</span>
+                    <span class="date-count">${count}</span>
+                `;
+                
+                item.addEventListener('click', () => {
+                    selectedDate = date;
+                    updateDateList();
+                    updateFileList();
+                });
+                
+                dateListEl.appendChild(item);
+            });
+        }
+        
+        // 更新日期列表的选中状态
+        function updateDateList() {
+            const items = document.querySelectorAll('.date-item');
+            items.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            items.forEach((item, index) => {
+                if (index === 0 && !selectedDate) {
+                    item.classList.add('active');
+                } else if (index > 0) {
+                    const date = Object.keys(dateGroups).sort((a, b) => b.localeCompare(a))[index - 1];
+                    if (selectedDate === date) {
+                        item.classList.add('active');
+                    }
+                }
             });
         }
         
@@ -877,8 +1071,9 @@
             
             fileTreeEl.innerHTML = '';
             
-            // 先根据关键词过滤
+            // 先根据关键词过滤，再根据日期过滤
             let filesToShow = filterByKeywords(allFiles);
+            filesToShow = filterByDate(filesToShow);
             
             if (searchQuery) {
                 // 搜索模式：显示扁平列表
@@ -925,8 +1120,8 @@
                 loadingEl.style.display = 'none';
                 fileTreeEl.style.display = 'block';
                 
-                // 提取关键词（异步，不阻塞文件列表显示）
-                extractAllKeywords().then(() => {
+                // 提取关键词和日期（异步，不阻塞文件列表显示）
+                extractAllMetadata().then(() => {
                     updateFileList();
                 });
                 
