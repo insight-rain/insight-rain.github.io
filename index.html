@@ -9,7 +9,7 @@
     <!-- 代码高亮库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- 数学公式支持（可选） -->
+    <!-- 数学公式支持 -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
@@ -54,12 +54,17 @@
         }
         
         .sidebar {
-            width: 300px;
+            width: 350px;
             background: white;
             border-right: 1px solid #e1e8ed;
-            overflow-y: auto;
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
             box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e1e8ed;
         }
         
         .sidebar-title {
@@ -67,61 +72,144 @@
             font-weight: 600;
             color: #667eea;
             margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e1e8ed;
         }
         
-        .file-list {
-            list-style: none;
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
         }
         
-        .file-item {
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
+        .search-input {
+            width: 100%;
+            padding: 10px 35px 10px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: border-color 0.2s;
         }
         
-        .file-item:hover {
-            background: #f8f9fa;
-            border-color: #e1e8ed;
-        }
-        
-        .file-item.active {
-            background: #667eea;
-            color: white;
+        .search-input:focus {
+            outline: none;
             border-color: #667eea;
         }
         
-        .file-item.active .file-name {
-            color: white;
-            font-weight: 600;
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
         }
         
-        .file-name {
+        .sort-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .sort-select {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            background: white;
+        }
+        
+        .sort-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .file-tree-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px 20px;
+        }
+        
+        .tree-node {
+            margin-bottom: 4px;
+        }
+        
+        .tree-folder {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .tree-folder-header {
+            padding: 8px 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            font-weight: 500;
+        }
+        
+        .tree-folder-header:hover {
+            background: #f8f9fa;
+        }
+        
+        .tree-folder-icon {
+            font-size: 0.9em;
+            transition: transform 0.2s;
+            width: 16px;
+            text-align: center;
+        }
+        
+        .tree-folder.expanded .tree-folder-icon {
+            transform: rotate(90deg);
+        }
+        
+        .tree-folder-name {
+            color: #667eea;
             font-size: 0.95em;
-            color: #333;
-            margin-bottom: 5px;
+        }
+        
+        .tree-folder-children {
+            margin-left: 20px;
+            margin-top: 4px;
+            display: none;
+        }
+        
+        .tree-folder.expanded .tree-folder-children {
+            display: block;
+        }
+        
+        .tree-file {
+            padding: 8px 10px 8px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tree-file:hover {
+            background: #f8f9fa;
+        }
+        
+        .tree-file.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tree-file-icon {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+        
+        .tree-file-name {
+            font-size: 0.9em;
+            flex: 1;
             word-break: break-word;
         }
         
-        .file-path {
-            font-size: 0.75em;
-            color: #999;
-            opacity: 0.8;
-        }
-        
-        .file-item.active .file-path {
-            color: rgba(255,255,255,0.9);
-        }
-        
-        .content-area {
-            flex: 1;
-            overflow-y: auto;
-            background: white;
-            padding: 40px 50px;
+        .tree-file.active .tree-file-name {
+            color: white;
+            font-weight: 500;
         }
         
         .loading, .error {
@@ -135,6 +223,19 @@
             color: #c33;
             border-radius: 8px;
             margin: 20px;
+        }
+        
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-inner {
+            flex: 1;
+            padding: 40px 50px;
         }
         
         /* Markdown 渲染样式 */
@@ -309,6 +410,48 @@
             background: #5a6268;
         }
         
+        .comments-section {
+            border-top: 2px solid #e1e8ed;
+            padding: 40px 50px;
+            background: #f8f9fa;
+        }
+        
+        .comments-title {
+            font-size: 1.5em;
+            color: #24292e;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .giscus {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* 滚动条样式 */
+        .sidebar .file-tree-container::-webkit-scrollbar,
+        .content-area::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .sidebar .file-tree-container::-webkit-scrollbar-track,
+        .content-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .sidebar .file-tree-container::-webkit-scrollbar-thumb,
+        .content-area::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .sidebar .file-tree-container::-webkit-scrollbar-thumb:hover,
+        .content-area::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .main-container {
@@ -319,33 +462,16 @@
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid #e1e8ed;
-                max-height: 300px;
+                max-height: 400px;
             }
             
-            .content-area {
+            .content-inner {
                 padding: 20px;
             }
-        }
-        
-        /* 滚动条样式 */
-        .sidebar::-webkit-scrollbar,
-        .content-area::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .sidebar::-webkit-scrollbar-track,
-        .content-area::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb:hover,
-        .content-area::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            
+            .comments-section {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -357,19 +483,43 @@
     
     <div class="main-container">
         <div class="sidebar">
-            <div class="sidebar-title">📄 文件列表</div>
-            <div id="loading" class="loading">正在加载文件列表...</div>
-            <div id="error" class="error" style="display: none;"></div>
-            <ul id="fileList" class="file-list" style="display: none;"></ul>
+            <div class="sidebar-header">
+                <div class="sidebar-title">📄 文件列表</div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜索文件...">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div class="sort-controls">
+                    <select id="sortSelect" class="sort-select">
+                        <option value="name-asc">按名称 ↑</option>
+                        <option value="name-desc">按名称 ↓</option>
+                        <option value="path-asc">按路径 ↑</option>
+                        <option value="path-desc">按路径 ↓</option>
+                        <option value="size-asc">按大小 ↑</option>
+                        <option value="size-desc">按大小 ↓</option>
+                    </select>
+                </div>
+            </div>
+            <div class="file-tree-container">
+                <div id="loading" class="loading">正在加载文件列表...</div>
+                <div id="error" class="error" style="display: none;"></div>
+                <div id="fileTree" style="display: none;"></div>
+            </div>
         </div>
         
         <div class="content-area">
-            <div id="contentLoading" class="loading" style="display: none;">正在加载内容...</div>
-            <div id="contentError" class="error" style="display: none;"></div>
-            <div id="markdownContent" style="display: none;"></div>
-            <div id="welcomeMessage" style="text-align: center; padding: 60px 20px; color: #999;">
-                <h2 style="color: #667eea; margin-bottom: 15px;">👋 欢迎</h2>
-                <p>请从左侧选择要查看的 Markdown 文件</p>
+            <div class="content-inner">
+                <div id="contentLoading" class="loading" style="display: none;">正在加载内容...</div>
+                <div id="contentError" class="error" style="display: none;"></div>
+                <div id="markdownContent" style="display: none;"></div>
+                <div id="welcomeMessage" style="text-align: center; padding: 60px 20px; color: #999;">
+                    <h2 style="color: #667eea; margin-bottom: 15px;">👋 欢迎</h2>
+                    <p>请从左侧选择要查看的 Markdown 文件</p>
+                </div>
+            </div>
+            <div id="commentsSection" class="comments-section" style="display: none;">
+                <h2 class="comments-title">💬 评论</h2>
+                <div class="giscus" id="giscus-container"></div>
             </div>
         </div>
     </div>
@@ -410,13 +560,184 @@
             };
         }
         
-        let mdFiles = [];
+        let allFiles = [];
+        let fileTree = {};
         let currentFile = null;
+        let filteredFiles = [];
+        let sortOrder = 'name-asc';
+        
+        // 构建文件树结构
+        function buildFileTree(files) {
+            const tree = {};
+            
+            files.forEach(file => {
+                const parts = file.path.split('/');
+                let current = tree;
+                
+                for (let i = 0; i < parts.length - 1; i++) {
+                    const part = parts[i];
+                    if (!current[part]) {
+                        current[part] = { type: 'folder', children: {} };
+                    }
+                    current = current[part].children;
+                }
+                
+                const fileName = parts[parts.length - 1];
+                if (!current[fileName]) {
+                    current[fileName] = { type: 'file', data: file };
+                }
+            });
+            
+            return tree;
+        }
+        
+        // 排序文件
+        function sortFiles(files, order) {
+            const sorted = [...files];
+            
+            sorted.sort((a, b) => {
+                let comparison = 0;
+                
+                switch(order) {
+                    case 'name-asc':
+                        comparison = a.path.split('/').pop().localeCompare(b.path.split('/').pop(), 'zh-CN');
+                        break;
+                    case 'name-desc':
+                        comparison = b.path.split('/').pop().localeCompare(a.path.split('/').pop(), 'zh-CN');
+                        break;
+                    case 'path-asc':
+                        comparison = a.path.localeCompare(b.path, 'zh-CN');
+                        break;
+                    case 'path-desc':
+                        comparison = b.path.localeCompare(a.path, 'zh-CN');
+                        break;
+                    case 'size-asc':
+                        comparison = (a.size || 0) - (b.size || 0);
+                        break;
+                    case 'size-desc':
+                        comparison = (b.size || 0) - (a.size || 0);
+                        break;
+                }
+                
+                return comparison;
+            });
+            
+            return sorted;
+        }
+        
+        // 过滤文件
+        function filterFiles(files, query) {
+            if (!query) return files;
+            
+            const lowerQuery = query.toLowerCase();
+            return files.filter(file => {
+                const fileName = file.path.split('/').pop().toLowerCase();
+                const filePath = file.path.toLowerCase();
+                return fileName.includes(lowerQuery) || filePath.includes(lowerQuery);
+            });
+        }
+        
+        // 渲染文件树
+        function renderFileTree(tree, container, level = 0) {
+            const entries = Object.entries(tree);
+            
+            entries.forEach(([name, node]) => {
+                if (node.type === 'folder') {
+                    const folderDiv = document.createElement('div');
+                    folderDiv.className = 'tree-node tree-folder';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'tree-folder-header';
+                    header.innerHTML = `
+                        <span class="tree-folder-icon">▶</span>
+                        <span class="tree-folder-name">📁 ${name}</span>
+                    `;
+                    
+                    const children = document.createElement('div');
+                    children.className = 'tree-folder-children';
+                    renderFileTree(node.children, children, level + 1);
+                    
+                    header.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        folderDiv.classList.toggle('expanded');
+                    });
+                    
+                    folderDiv.appendChild(header);
+                    folderDiv.appendChild(children);
+                    container.appendChild(folderDiv);
+                } else if (node.type === 'file') {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'tree-file';
+                    fileDiv.dataset.path = node.data.path;
+                    
+                    fileDiv.innerHTML = `
+                        <span class="tree-file-icon">📄</span>
+                        <span class="tree-file-name">${name}</span>
+                    `;
+                    
+                    fileDiv.addEventListener('click', () => {
+                        document.querySelectorAll('.tree-file').forEach(f => f.classList.remove('active'));
+                        fileDiv.classList.add('active');
+                        currentFile = node.data;
+                        loadFileContent(node.data);
+                    });
+                    
+                    container.appendChild(fileDiv);
+                }
+            });
+        }
+        
+        // 渲染扁平列表（搜索结果）
+        function renderFileList(files, container) {
+            container.innerHTML = '';
+            
+            files.forEach(file => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'tree-file';
+                fileDiv.dataset.path = file.path;
+                
+                const fileName = file.path.split('/').pop();
+                const filePath = file.path;
+                
+                fileDiv.innerHTML = `
+                    <span class="tree-file-icon">📄</span>
+                    <span class="tree-file-name" title="${filePath}">${fileName}</span>
+                `;
+                
+                fileDiv.addEventListener('click', () => {
+                    document.querySelectorAll('.tree-file').forEach(f => f.classList.remove('active'));
+                    fileDiv.classList.add('active');
+                    currentFile = file;
+                    loadFileContent(file);
+                });
+                
+                container.appendChild(fileDiv);
+            });
+        }
+        
+        // 更新文件列表显示
+        function updateFileList() {
+            const fileTreeEl = document.getElementById('fileTree');
+            const searchQuery = document.getElementById('searchInput').value.trim();
+            
+            fileTreeEl.innerHTML = '';
+            
+            if (searchQuery) {
+                // 搜索模式：显示扁平列表
+                filteredFiles = filterFiles(allFiles, searchQuery);
+                filteredFiles = sortFiles(filteredFiles, sortOrder);
+                renderFileList(filteredFiles, fileTreeEl);
+            } else {
+                // 正常模式：显示树形结构
+                fileTree = buildFileTree(allFiles);
+                renderFileTree(fileTree, fileTreeEl);
+            }
+        }
         
         async function loadMarkdownFiles() {
             const loadingEl = document.getElementById('loading');
             const errorEl = document.getElementById('error');
-            const fileListEl = document.getElementById('fileList');
+            const fileTreeEl = document.getElementById('fileTree');
             
             try {
                 const repoInfo = getRepoInfo();
@@ -431,51 +752,22 @@
                 const data = await response.json();
                 
                 // 过滤出 .md 文件
-                mdFiles = data.tree.filter(file => 
+                allFiles = data.tree.filter(file => 
                     file.type === 'blob' && 
                     file.path.endsWith('.md') &&
                     !file.path.startsWith('.')
                 );
                 
-                if (mdFiles.length === 0) {
+                if (allFiles.length === 0) {
                     loadingEl.textContent = '未找到 Markdown 文件';
                     return;
                 }
                 
-                // 隐藏加载提示，显示文件列表
+                // 隐藏加载提示，显示文件树
                 loadingEl.style.display = 'none';
-                fileListEl.style.display = 'block';
+                fileTreeEl.style.display = 'block';
                 
-                // 渲染文件列表
-                mdFiles.forEach((file, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'file-item';
-                    if (index === 0) {
-                        li.classList.add('active');
-                        currentFile = file;
-                        loadFileContent(file);
-                    }
-                    
-                    const fileName = file.path.split('/').pop();
-                    
-                    li.innerHTML = `
-                        <div class="file-name">${fileName}</div>
-                        <div class="file-path">${file.path}</div>
-                    `;
-                    
-                    li.addEventListener('click', () => {
-                        // 移除所有 active 类
-                        document.querySelectorAll('.file-item').forEach(item => {
-                            item.classList.remove('active');
-                        });
-                        // 添加 active 类到当前项
-                        li.classList.add('active');
-                        currentFile = file;
-                        loadFileContent(file);
-                    });
-                    
-                    fileListEl.appendChild(li);
-                });
+                updateFileList();
                 
             } catch (error) {
                 console.error('Error loading files:', error);
@@ -490,11 +782,13 @@
             const contentErrorEl = document.getElementById('contentError');
             const markdownContentEl = document.getElementById('markdownContent');
             const welcomeMessageEl = document.getElementById('welcomeMessage');
+            const commentsSectionEl = document.getElementById('commentsSection');
             
             // 隐藏欢迎消息和之前的错误
             welcomeMessageEl.style.display = 'none';
             contentErrorEl.style.display = 'none';
             markdownContentEl.style.display = 'none';
+            commentsSectionEl.style.display = 'none';
             contentLoadingEl.style.display = 'block';
             
             try {
@@ -515,6 +809,7 @@
                 // 显示内容
                 contentLoadingEl.style.display = 'none';
                 markdownContentEl.style.display = 'block';
+                commentsSectionEl.style.display = 'block';
                 
                 const fileName = file.path.split('/').pop();
                 const githubUrl = `https://github.com/${repoInfo.owner}/${repoInfo.repo}/blob/main/${file.path}`;
@@ -542,6 +837,9 @@
                     });
                 }
                 
+                // 加载评论
+                loadComments(file.path);
+                
                 // 滚动到顶部
                 document.querySelector('.content-area').scrollTop = 0;
                 
@@ -552,6 +850,81 @@
                 contentErrorEl.textContent = `加载文件内容失败: ${error.message}`;
             }
         }
+        
+        // 加载 Giscus 评论
+        // 使用说明：
+        // 1. 在 GitHub 仓库设置中启用 Discussions 功能
+        // 2. 访问 https://giscus.app 并按照提示配置
+        // 3. 将获取的 repo-id 和 category-id 填入下方配置中
+        function loadComments(filePath) {
+            const giscusContainer = document.getElementById('giscus-container');
+            giscusContainer.innerHTML = '';
+            
+            const repoInfo = getRepoInfo();
+            
+            // Giscus 配置 - 请到 https://giscus.app 获取您的配置信息
+            // 如果未配置，评论功能将不会显示
+            const GISCUS_CONFIG = {
+                repo: `${repoInfo.owner}/${repoInfo.repo}`,
+                repoId: '', // 从 giscus.app 获取
+                category: 'Announcements',
+                categoryId: '', // 从 giscus.app 获取
+                mapping: 'pathname', // 根据页面路径创建讨论
+                strict: '0',
+                reactionsEnabled: '1',
+                emitMetadata: '0',
+                inputPosition: 'bottom',
+                theme: 'light',
+                lang: 'zh-CN',
+                loading: 'lazy'
+            };
+            
+            // 如果没有配置 repo-id，显示配置提示
+            if (!GISCUS_CONFIG.repoId || !GISCUS_CONFIG.categoryId) {
+                giscusContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #666; background: #f8f9fa; border-radius: 8px;">
+                        <p>💬 评论功能需要配置 Giscus</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">
+                            1. 在 GitHub 仓库中启用 Discussions<br>
+                            2. 访问 <a href="https://giscus.app" target="_blank" style="color: #667eea;">giscus.app</a> 获取配置信息<br>
+                            3. 将 repo-id 和 category-id 填入代码中
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 配置 Giscus
+            const script = document.createElement('script');
+            script.src = 'https://giscus.app/client.js';
+            script.setAttribute('data-repo', GISCUS_CONFIG.repo);
+            script.setAttribute('data-repo-id', GISCUS_CONFIG.repoId);
+            script.setAttribute('data-category', GISCUS_CONFIG.category);
+            script.setAttribute('data-category-id', GISCUS_CONFIG.categoryId);
+            script.setAttribute('data-mapping', GISCUS_CONFIG.mapping);
+            script.setAttribute('data-strict', GISCUS_CONFIG.strict);
+            script.setAttribute('data-reactions-enabled', GISCUS_CONFIG.reactionsEnabled);
+            script.setAttribute('data-emit-metadata', GISCUS_CONFIG.emitMetadata);
+            script.setAttribute('data-input-position', GISCUS_CONFIG.inputPosition);
+            script.setAttribute('data-theme', GISCUS_CONFIG.theme);
+            script.setAttribute('data-lang', GISCUS_CONFIG.lang);
+            script.setAttribute('data-loading', GISCUS_CONFIG.loading);
+            script.crossOrigin = 'anonymous';
+            script.async = true;
+            
+            giscusContainer.appendChild(script);
+        }
+        
+        // 搜索事件
+        document.getElementById('searchInput').addEventListener('input', () => {
+            updateFileList();
+        });
+        
+        // 排序事件
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            sortOrder = e.target.value;
+            updateFileList();
+        });
         
         // 页面加载时获取文件列表
         window.addEventListener('DOMContentLoaded', loadMarkdownFiles);
