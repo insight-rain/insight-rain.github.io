@@ -278,9 +278,11 @@
             transition: transform 0.2s;
             width: 16px;
             text-align: center;
+            display: inline-block;
+            pointer-events: none;
         }
         
-        .tree-folder.expanded .tree-folder-icon {
+        .tree-folder.expanded > .tree-folder-header .tree-folder-icon {
             transform: rotate(90deg);
         }
         
@@ -295,7 +297,7 @@
             display: none;
         }
         
-        .tree-folder.expanded .tree-folder-children {
+        .tree-folder.expanded > .tree-folder-children {
             display: block;
         }
         
@@ -1006,9 +1008,16 @@
                     children.className = 'tree-folder-children';
                     renderFileTree(node.children, children, level + 1);
                     
+                    // 确保点击事件正确处理，防止事件冒泡
                     header.addEventListener('click', (e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         folderDiv.classList.toggle('expanded');
+                    });
+                    
+                    // 防止子元素的点击事件影响父文件夹
+                    children.addEventListener('click', (e) => {
+                        e.stopPropagation();
                     });
                     
                     folderDiv.appendChild(header);
