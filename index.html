@@ -1491,12 +1491,14 @@
                 const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${file.path}`;
                 
                 let text = null;
+                let source = '';
                 
                 // 尝试 CDN
                 try {
                     const response = await fetchWithTimeout(cdnUrl, 6000);
                     if (response.ok) {
                         text = await response.text();
+                        source = 'CDN';
                     }
                 } catch (e) {
                     // CDN 失败，尝试 raw
@@ -1508,18 +1510,25 @@
                         const response = await fetchWithTimeout(rawUrl, 6000);
                         if (response.ok) {
                             text = await response.text();
+                            source = 'RAW';
                         }
                     } catch (e) {
                         // raw 也失败
                     }
                 }
                 
-                if (!text) return { keywords: [], date: null };
+                if (!text) {
+                    console.log('Failed to fetch:', file.path);
+                    return { keywords: [], date: null };
+                }
                 
                 // 提取关键词 - 支持多种格式
-                // 格式1: ## 关键词\n\n关键词内容
-                // 格式2: ## 关键词\n关键词内容
-                const keywordMatch = text.match(/##\s*关键词\s*\n+([^\n#][^\n]*?)(?:\n\n|\n##|\n---|$)/);
+                // 格式: ## 关键词\n\n关键词内容\n\n
+                const keywordMatch = text.match(/##\s*关键词\s*\n\n([^\n]+)/);
+                // 调试输出
+                if (!keywordMatch) {
+                    console.log('No keyword match in:', file.path);
+                }
                 let keywords = [];
                 if (keywordMatch) {
                     const keywordLine = keywordMatch[1].trim();
@@ -1614,11 +1623,27 @@
                 monthGroups[month].files.sort((a, b) => b.date.localeCompare(a.date));
             });
             
-            console.log('Metadata loaded:', {
+            const debugInfo = {
                 keywords: Object.keys(allKeywords).length,
+                keywordsList: Object.keys(allKeywords).slice(0, 5),
                 dates: Object.keys(monthGroups).length,
-                files: totalFiles
-            });
+                files: totalFiles,
+                sampleFile: allFiles[0]?.path,
+                sampleKeywords: fileKeywords[allFiles[0]?.path],
+                sampleDate: fileDates[allFiles[0]?.path]
+            };
+            console.log('Metadata loaded:', debugInfo);
+            
+            // 如果没有关键词，显示调试信息
+            if (Object.keys(allKeywords).length === 0) {
+                const keywordListEl = document.getElementById('keywordList');
+                keywordListEl.innerHTML = `<div style="padding: 10px; font-size: 0.8em; color: #c33;">
+                    调试: 共${totalFiles}个文件<br>
+                    关键词数: ${debugInfo.keywords}<br>
+                    示例: ${debugInfo.sampleFile}<br>
+                    请检查控制台
+                </div>`;
+            }
             
             // 渲染关键词列表
             renderKeywordList();
@@ -2175,7 +2200,7 @@
         // 缓存相关常量
         const CACHE_KEY = 'md_file_list_cache';
         const CACHE_METADATA_KEY = 'md_metadata_cache';
-        const CACHE_VERSION = 'v5'; // 版本号，更新后自动清除旧缓存
+        const CACHE_VERSION = 'v7'; // 版本号，更新后自动清除旧缓存
         const CACHE_DURATION = 10 * 60 * 1000; // 缓存10分钟
         
         // 从缓存获取数据
