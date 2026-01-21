@@ -1420,7 +1420,7 @@
         }
         
         // 带超时的fetch
-        async function fetchWithTimeout(url, timeout = 8000) {
+        async function fetchWithTimeout(url, timeout = 10000) {
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), timeout);
             try {
@@ -1433,16 +1433,88 @@
             }
         }
         
+        // 获取文件内容（带备用源和重试）
+        async function fetchFileContent(filePath) {
+            const repoInfo = getRepoInfo();
+            
+            // 主源：raw.githubusercontent.com
+            const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${filePath}`;
+            
+            // 备用源：jsDelivr CDN（国内访问更稳定）
+            const cdnUrl = `https://cdn.jsdelivr.net/gh/${repoInfo.owner}/${repoInfo.repo}@main/${filePath}`;
+            
+            // 备用源2：GitHub API（会消耗 API 限额）
+            const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${filePath}?ref=main`;
+            
+            const sources = [
+                { url: rawUrl, name: 'GitHub Raw', isApi: false },
+                { url: cdnUrl, name: 'jsDelivr CDN', isApi: false },
+                { url: apiUrl, name: 'GitHub API', isApi: true }
+            ];
+            
+            let lastError = null;
+            
+            for (const source of sources) {
+                try {
+                    console.log(`Trying ${source.name}...`);
+                    const response = await fetchWithTimeout(source.url, 10000);
+                    
+                    if (response.ok) {
+                        if (source.isApi) {
+                            // GitHub API 返回 base64 编码的内容
+                            const data = await response.json();
+                            const content = atob(data.content);
+                            // 处理 UTF-8
+                            const decoder = new TextDecoder('utf-8');
+                            const bytes = new Uint8Array(content.split('').map(c => c.charCodeAt(0)));
+                            return decoder.decode(bytes);
+                        } else {
+                            return await response.text();
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`${source.name} failed:`, error.message);
+                    lastError = error;
+                }
+            }
+            
+            throw lastError || new Error('所有源都无法访问');
+        }
+        
         // 解析文件关键词和日期
         async function extractFileMetadata(file) {
             try {
                 const repoInfo = getRepoInfo();
+                
+                // 优先使用 jsDelivr CDN（国内更稳定）
+                const cdnUrl = `https://cdn.jsdelivr.net/gh/${repoInfo.owner}/${repoInfo.repo}@main/${file.path}`;
                 const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${file.path}`;
                 
-                const response = await fetchWithTimeout(rawUrl, 8000);
-                if (!response.ok) return { keywords: [], date: null };
+                let text = null;
                 
-                const text = await response.text();
+                // 尝试 CDN
+                try {
+                    const response = await fetchWithTimeout(cdnUrl, 6000);
+                    if (response.ok) {
+                        text = await response.text();
+                    }
+                } catch (e) {
+                    // CDN 失败，尝试 raw
+                }
+                
+                // CDN 失败则尝试 raw
+                if (!text) {
+                    try {
+                        const response = await fetchWithTimeout(rawUrl, 6000);
+                        if (response.ok) {
+                            text = await response.text();
+                        }
+                    } catch (e) {
+                        // raw 也失败
+                    }
+                }
+                
+                if (!text) return { keywords: [], date: null };
                 
                 // 提取关键词 - 支持多种格式
                 // 格式1: ## 关键词\n\n关键词内容
@@ -1465,7 +1537,7 @@
                 
                 return { keywords, date };
             } catch (error) {
-                // 静默失败，不在控制台打印每个错误
+                // 静默失败
                 return { keywords: [], date: null };
             }
         }
@@ -2103,7 +2175,7 @@
         // 缓存相关常量
         const CACHE_KEY = 'md_file_list_cache';
         const CACHE_METADATA_KEY = 'md_metadata_cache';
-        const CACHE_VERSION = 'v4'; // 版本号，更新后自动清除旧缓存
+        const CACHE_VERSION = 'v5'; // 版本号，更新后自动清除旧缓存
         const CACHE_DURATION = 10 * 60 * 1000; // 缓存10分钟
         
         // 从缓存获取数据
@@ -2292,18 +2364,11 @@
             commentsSectionEl.style.display = 'none';
             document.getElementById('articlesGrid').style.display = 'none';
             contentLoadingEl.style.display = 'block';
+            contentLoadingEl.innerHTML = '正在加载内容...';
             
             try {
-                const repoInfo = getRepoInfo();
-                const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${file.path}`;
-                
-                const response = await fetch(rawUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const markdown = await response.text();
+                // 使用多源获取文件内容
+                const markdown = await fetchFileContent(file.path);
                 
                 // 渲染 Markdown
                 const html = marked.parse(markdown);
@@ -2313,8 +2378,10 @@
                 markdownContentEl.style.display = 'block';
                 commentsSectionEl.style.display = 'block';
                 
+                const repoInfo = getRepoInfo();
                 const fileName = file.path.split('/').pop();
                 const githubUrl = `https://github.com/${repoInfo.owner}/${repoInfo.repo}/blob/main/${file.path}`;
+                const cdnUrl = `https://cdn.jsdelivr.net/gh/${repoInfo.owner}/${repoInfo.repo}@main/${file.path}`;
                 
                 // 检查是否有筛选条件，显示返回按钮
                 const hasFilters = selectedKeywords.size > 0 || selectedMonth;
@@ -2326,7 +2393,7 @@
                         <h2>${fileName}</h2>
                         <div class="file-actions">
                             ${backBtnHtml}
-                            <a href="${rawUrl}" target="_blank" class="btn">📄 查看原始文件</a>
+                            <a href="${cdnUrl}" target="_blank" class="btn">📄 查看原始文件</a>
                             <a href="${githubUrl}" target="_blank" class="btn btn-secondary">🔗 在 GitHub 查看</a>
                         </div>
                     </div>
