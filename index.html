@@ -18,6 +18,12 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
         }
         
         body {
@@ -531,6 +537,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 15px 20px 20px;
+            -webkit-overflow-scrolling: touch;
         }
         
         .tree-node {
@@ -638,6 +645,7 @@
             background: white;
             display: flex;
             flex-direction: column;
+            -webkit-overflow-scrolling: touch;
         }
         
         .content-inner {
@@ -870,26 +878,349 @@
             background: #555;
         }
         
-        /* 响应式设计 */
+        /* 响应式设计 - 平板 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 300px;
+            }
+            
+            .articles-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+        
+        /* 响应式设计 - 手机 */
         @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.4em;
+            }
+            
+            .header .subtitle {
+                font-size: 0.85em;
+            }
+            
             .main-container {
                 flex-direction: column;
+                height: calc(100vh - 70px);
             }
             
             .sidebar {
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid #e1e8ed;
-                max-height: 400px;
+                max-height: none;
+                flex: none;
+            }
+            
+            /* 手机端侧边栏折叠模式 */
+            .sidebar.collapsed .sidebar-header {
+                display: none;
+            }
+            
+            .sidebar.collapsed .file-tree-container {
+                display: none;
+            }
+            
+            .sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 20px;
+                background: #f8f9fa;
+                border-bottom: 1px solid #e1e8ed;
+                cursor: pointer;
+                font-weight: 500;
+                color: #667eea;
+            }
+            
+            .sidebar-toggle-icon {
+                transition: transform 0.3s;
+            }
+            
+            .sidebar.collapsed .sidebar-toggle-icon {
+                transform: rotate(180deg);
+            }
+            
+            .sidebar-header {
+                padding: 15px;
+            }
+            
+            .sidebar-title {
+                font-size: 1em;
+                margin-bottom: 12px;
+            }
+            
+            .search-input {
+                padding: 12px 35px 12px 12px;
+                font-size: 16px; /* 防止iOS缩放 */
+            }
+            
+            .sort-select, .date-select {
+                padding: 10px;
+                font-size: 16px;
+            }
+            
+            .keyword-list {
+                max-height: 150px;
+            }
+            
+            .keyword-item {
+                padding: 10px 12px;
+            }
+            
+            .date-list {
+                max-height: 180px;
+            }
+            
+            .month-header {
+                padding: 12px;
+            }
+            
+            .article-preview {
+                padding: 12px 12px 12px 20px;
+            }
+            
+            .file-tree-container {
+                padding: 10px 15px 15px;
+                max-height: 250px;
+                overflow-y: auto;
+            }
+            
+            .tree-file {
+                padding: 10px 10px 10px 25px;
+            }
+            
+            .content-area {
+                flex: 1;
+                min-height: 0;
             }
             
             .content-inner {
-                padding: 20px;
+                padding: 15px;
+            }
+            
+            /* 文章卡片网格 - 手机端 */
+            .articles-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 5px;
+            }
+            
+            .articles-grid-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding-bottom: 12px;
+            }
+            
+            .articles-grid-title {
+                font-size: 1.1em;
+            }
+            
+            .articles-grid-count {
+                font-size: 0.85em;
+            }
+            
+            .articles-grid-filters {
+                gap: 6px;
+            }
+            
+            .filter-tag {
+                font-size: 0.75em;
+                padding: 3px 8px;
+            }
+            
+            .article-card {
+                border-radius: 10px;
+            }
+            
+            .article-card-header {
+                padding: 15px 15px 12px;
+            }
+            
+            .article-card-title {
+                font-size: 1em;
+            }
+            
+            .article-card-path {
+                font-size: 0.75em;
+            }
+            
+            .article-card-body {
+                padding: 12px 15px;
+            }
+            
+            .article-card-meta {
+                gap: 10px;
+                font-size: 0.8em;
+            }
+            
+            .article-card-keywords {
+                gap: 5px;
+            }
+            
+            .article-card-keyword {
+                padding: 2px 8px;
+                font-size: 0.75em;
+            }
+            
+            .article-card-footer {
+                padding: 10px 15px;
+            }
+            
+            .article-card-btn {
+                padding: 8px 16px;
+                font-size: 0.85em;
+            }
+            
+            .no-articles {
+                padding: 40px 15px;
+            }
+            
+            .no-articles-icon {
+                font-size: 2.5em;
+            }
+            
+            /* Markdown 内容 - 手机端 */
+            .markdown-body {
+                font-size: 15px;
+                line-height: 1.7;
+            }
+            
+            .markdown-body h1 {
+                font-size: 1.6em;
+            }
+            
+            .markdown-body h2 {
+                font-size: 1.3em;
+            }
+            
+            .markdown-body h3 {
+                font-size: 1.1em;
+            }
+            
+            .markdown-body pre {
+                padding: 12px;
+                font-size: 0.8em;
+                border-radius: 8px;
+            }
+            
+            .markdown-body table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .file-header {
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+            
+            .file-header h2 {
+                font-size: 1.3em;
+                word-break: break-word;
+            }
+            
+            .file-actions {
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 12px;
+            }
+            
+            .btn {
+                padding: 10px 14px;
+                font-size: 0.85em;
+                flex: 1;
+                text-align: center;
+                min-width: 120px;
             }
             
             .comments-section {
-                padding: 20px;
+                padding: 20px 15px;
             }
+            
+            .comments-title {
+                font-size: 1.2em;
+            }
+            
+            /* 欢迎消息 - 手机端 */
+            #welcomeMessage {
+                padding: 40px 15px !important;
+            }
+            
+            #welcomeMessage h2 {
+                font-size: 1.3em !important;
+            }
+            
+            #welcomeMessage p {
+                font-size: 0.9em;
+            }
+            
+            /* 错误提示 - 手机端 */
+            .error {
+                margin: 10px;
+                padding: 15px;
+                font-size: 0.9em;
+            }
+            
+            .error pre {
+                font-size: 0.85em;
+            }
+            
+            .error button {
+                width: 100%;
+                margin-top: 10px !important;
+                margin-left: 0 !important;
+            }
+        }
+        
+        /* 小屏手机 */
+        @media (max-width: 380px) {
+            .header h1 {
+                font-size: 1.2em;
+            }
+            
+            .btn {
+                padding: 8px 12px;
+                font-size: 0.8em;
+                min-width: 100px;
+            }
+            
+            .article-card-title {
+                font-size: 0.95em;
+            }
+        }
+        
+        /* 横屏手机 */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .main-container {
+                flex-direction: row;
+                height: calc(100vh - 60px);
+            }
+            
+            .sidebar {
+                width: 280px;
+                max-height: none;
+                border-right: 1px solid #e1e8ed;
+                border-bottom: none;
+            }
+            
+            .sidebar-toggle {
+                display: none;
+            }
+            
+            .file-tree-container {
+                max-height: none;
+            }
+        }
+        
+        /* 隐藏桌面端的侧边栏切换按钮 */
+        .sidebar-toggle {
+            display: none;
         }
     </style>
 </head>
@@ -900,7 +1231,11 @@
     </div>
     
     <div class="main-container">
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+                <span>📁 筛选与导航</span>
+                <span class="sidebar-toggle-icon">▼</span>
+            </div>
             <div class="sidebar-header">
                 <div class="sidebar-title">📄 文件列表</div>
                 <div class="search-box">
@@ -1363,6 +1698,8 @@
                                 f.classList.add('active');
                             }
                         });
+                        // 手机端自动折叠侧边栏
+                        autoCollapseSidebar();
                     }
                 });
             });
@@ -1644,6 +1981,8 @@
                         loadFileContent(node.data);
                         // 同步更新文章预览的选中状态
                         document.querySelectorAll('.article-preview').forEach(ap => ap.classList.remove('active'));
+                        // 手机端自动折叠侧边栏
+                        autoCollapseSidebar();
                     });
                     
                     container.appendChild(fileDiv);
@@ -1675,6 +2014,8 @@
                     loadFileContent(file);
                     // 同步更新文章预览的选中状态
                     document.querySelectorAll('.article-preview').forEach(ap => ap.classList.remove('active'));
+                    // 手机端自动折叠侧边栏
+                    autoCollapseSidebar();
                 });
                 
                 container.appendChild(fileDiv);
@@ -2014,6 +2355,28 @@
         
         // 页面加载时获取文件列表
         window.addEventListener('DOMContentLoaded', loadMarkdownFiles);
+        
+        // 侧边栏切换（手机端）
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+        
+        // 手机端：选择文件后自动折叠侧边栏
+        function autoCollapseSidebar() {
+            if (window.innerWidth <= 768 && window.innerHeight > window.innerWidth) {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.add('collapsed');
+            }
+        }
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('collapsed');
+            }
+        });
     </script>
 </body>
 </html>
