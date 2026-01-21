@@ -912,8 +912,15 @@
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid #e1e8ed;
-                max-height: none;
+                max-height: 60vh;
                 flex: none;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .sidebar.collapsed {
+                max-height: none;
+                overflow: visible;
             }
             
             /* 手机端侧边栏折叠模式 */
@@ -966,6 +973,7 @@
             
             .keyword-list {
                 max-height: 150px;
+                min-height: 40px;
             }
             
             .keyword-item {
@@ -974,6 +982,7 @@
             
             .date-list {
                 max-height: 180px;
+                min-height: 40px;
             }
             
             .month-header {
@@ -986,8 +995,7 @@
             
             .file-tree-container {
                 padding: 10px 15px 15px;
-                max-height: 250px;
-                overflow-y: auto;
+                flex: none;
             }
             
             .tree-file {
@@ -1254,11 +1262,15 @@
                 </div>
                 <div class="keyword-section">
                     <div class="keyword-title">🏷️ 关键词筛选</div>
-                    <div id="keywordList" class="keyword-list"></div>
+                    <div id="keywordList" class="keyword-list">
+                        <div style="padding: 10px; text-align: center; color: #999; font-size: 0.85em;">加载中...</div>
+                    </div>
                 </div>
                 <div class="date-section">
                     <div class="date-title">📅 日期索引</div>
-                    <div id="dateList" class="date-list"></div>
+                    <div id="dateList" class="date-list">
+                        <div style="padding: 10px; text-align: center; color: #999; font-size: 0.85em;">加载中...</div>
+                    </div>
                 </div>
             </div>
             <div class="file-tree-container">
@@ -1407,13 +1419,27 @@
             });
         }
         
+        // 带超时的fetch
+        async function fetchWithTimeout(url, timeout = 8000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (error) {
+                clearTimeout(id);
+                throw error;
+            }
+        }
+        
         // 解析文件关键词和日期
         async function extractFileMetadata(file) {
             try {
                 const repoInfo = getRepoInfo();
                 const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${file.path}`;
                 
-                const response = await fetch(rawUrl);
+                const response = await fetchWithTimeout(rawUrl, 8000);
                 if (!response.ok) return { keywords: [], date: null };
                 
                 const text = await response.text();
@@ -1439,7 +1465,7 @@
                 
                 return { keywords, date };
             } catch (error) {
-                console.error(`Error extracting metadata from ${file.path}:`, error);
+                // 静默失败，不在控制台打印每个错误
                 return { keywords: [], date: null };
             }
         }
@@ -1457,8 +1483,23 @@
             fileDates = {};
             monthGroups = {};
             
+            const keywordListEl = document.getElementById('keywordList');
+            const dateListEl = document.getElementById('dateList');
+            
+            // 显示加载进度
+            const totalFiles = allFiles.length;
+            let loadedFiles = 0;
+            
+            const updateProgress = () => {
+                const percent = Math.round((loadedFiles / totalFiles) * 100);
+                keywordListEl.innerHTML = `<div style="padding: 10px; text-align: center; color: #667eea; font-size: 0.85em;">加载中 ${percent}%</div>`;
+                dateListEl.innerHTML = `<div style="padding: 10px; text-align: center; color: #667eea; font-size: 0.85em;">加载中 ${percent}%</div>`;
+            };
+            
+            updateProgress();
+            
             // 批量提取元数据（限制并发数）
-            const batchSize = 10;
+            const batchSize = 5; // 减少并发数以提高稳定性
             for (let i = 0; i < allFiles.length; i += batchSize) {
                 const batch = allFiles.slice(i, i + batchSize);
                 const results = await Promise.all(batch.map(file => extractFileMetadata(file)));
@@ -1489,12 +1530,22 @@
                         });
                         monthGroups[month].count++;
                     }
+                    
+                    loadedFiles++;
                 });
+                
+                updateProgress();
             }
             
             // 对每个月份内的文章按日期排序（从新到旧）
             Object.keys(monthGroups).forEach(month => {
                 monthGroups[month].files.sort((a, b) => b.date.localeCompare(a.date));
+            });
+            
+            console.log('Metadata loaded:', {
+                keywords: Object.keys(allKeywords).length,
+                dates: Object.keys(monthGroups).length,
+                files: totalFiles
             });
             
             // 渲染关键词列表
@@ -2052,7 +2103,7 @@
         // 缓存相关常量
         const CACHE_KEY = 'md_file_list_cache';
         const CACHE_METADATA_KEY = 'md_metadata_cache';
-        const CACHE_VERSION = 'v2'; // 版本号，更新后自动清除旧缓存
+        const CACHE_VERSION = 'v4'; // 版本号，更新后自动清除旧缓存
         const CACHE_DURATION = 10 * 60 * 1000; // 缓存10分钟
         
         // 从缓存获取数据
