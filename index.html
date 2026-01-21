@@ -133,42 +133,61 @@
             margin-bottom: 8px;
         }
         
-        .keyword-tags {
+        .keyword-list {
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            max-height: 150px;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 180px;
             overflow-y: auto;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
+            background: white;
         }
         
-        .keyword-tag {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #f0f0f0;
-            border: 1px solid #e1e8ed;
-            border-radius: 12px;
-            font-size: 0.75em;
+        .keyword-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
             cursor: pointer;
             transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85em;
             color: #333;
             user-select: none;
         }
         
-        .keyword-tag:hover {
-            background: #e0e0e0;
-            border-color: #667eea;
+        .keyword-item:last-child {
+            border-bottom: none;
         }
         
-        .keyword-tag.active {
+        .keyword-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .keyword-item.active {
             background: #667eea;
             color: white;
-            border-color: #667eea;
         }
         
-        .keyword-tag .count {
-            margin-left: 4px;
+        .keyword-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .keyword-count {
+            font-size: 0.8em;
             opacity: 0.7;
-            font-size: 0.9em;
+            padding: 2px 8px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+        
+        .keyword-item.active .keyword-count {
+            background: rgba(255,255,255,0.3);
         }
         
         .date-section {
@@ -182,21 +201,6 @@
             margin-bottom: 8px;
         }
         
-        .date-select {
-            width: 100%;
-            padding: 8px;
-            border: 2px solid #e1e8ed;
-            border-radius: 6px;
-            font-size: 0.85em;
-            cursor: pointer;
-            background: white;
-        }
-        
-        .date-select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
         .date-list {
             max-height: 200px;
             overflow-y: auto;
@@ -205,43 +209,118 @@
             background: white;
         }
         
-        .date-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .month-group {
+            border-bottom: 1px solid #e1e8ed;
         }
         
-        .date-item:last-child {
+        .month-group:last-child {
             border-bottom: none;
         }
         
-        .date-item:hover {
-            background: #f8f9fa;
+        .month-header {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafbfc;
+            font-weight: 500;
         }
         
-        .date-item.active {
+        .month-header:hover {
+            background: #f0f2f5;
+        }
+        
+        .month-header.active {
             background: #667eea;
             color: white;
         }
         
-        .date-label {
+        .month-toggle {
+            font-size: 0.8em;
+            transition: transform 0.2s;
+            width: 16px;
+            text-align: center;
+        }
+        
+        .month-group.expanded .month-toggle {
+            transform: rotate(90deg);
+        }
+        
+        .month-label {
+            font-size: 0.9em;
+            flex: 1;
+        }
+        
+        .month-count {
+            font-size: 0.75em;
+            opacity: 0.7;
+            padding: 2px 8px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 10px;
+            margin-right: 8px;
+        }
+        
+        .month-header.active .month-count {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .month-articles {
+            display: none;
+            padding: 0;
+            background: white;
+        }
+        
+        .month-group.expanded .month-articles {
+            display: block;
+        }
+        
+        .article-preview {
+            padding: 10px 12px 10px 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-top: 1px solid #f0f0f0;
             font-size: 0.85em;
         }
         
-        .date-count {
-            font-size: 0.75em;
-            opacity: 0.7;
-            padding: 2px 6px;
-            background: rgba(0,0,0,0.1);
-            border-radius: 10px;
+        .article-preview:hover {
+            background: #f8f9fa;
         }
         
-        .date-item.active .date-count {
-            background: rgba(255,255,255,0.3);
+        .article-preview.active {
+            background: #e8ecfc;
+            color: #667eea;
+        }
+        
+        .article-preview-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .article-preview-meta {
+            font-size: 0.8em;
+            color: #888;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .article-preview.active .article-preview-meta {
+            color: #8b9be8;
+        }
+        
+        .article-preview-date {
+            color: #999;
+        }
+        
+        .article-preview-keywords {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .file-tree-container {
@@ -625,7 +704,7 @@
                 </div>
                 <div class="keyword-section">
                     <div class="keyword-title">🏷️ 关键词筛选</div>
-                    <div id="keywordTags" class="keyword-tags"></div>
+                    <div id="keywordList" class="keyword-list"></div>
                 </div>
                 <div class="date-section">
                     <div class="date-title">📅 日期索引</div>
@@ -701,8 +780,9 @@
         let allKeywords = {}; // 关键词 -> 文件数量
         let selectedKeywords = new Set(); // 选中的关键词
         let fileDates = {}; // 文件路径 -> 日期字符串
-        let dateGroups = {}; // 日期（YYYY-MM-DD） -> 文件数量
-        let selectedDate = null; // 选中的日期
+        let monthGroups = {}; // 月份（YYYY-MM） -> { files: [], count: 0 }
+        let selectedMonth = null; // 选中的月份
+        let expandedMonths = new Set(); // 展开的月份
         
         // 构建文件树结构
         function buildFileTree(files) {
@@ -819,7 +899,7 @@
             fileKeywords = {};
             allKeywords = {};
             fileDates = {};
-            dateGroups = {};
+            monthGroups = {};
             
             // 批量提取元数据（限制并发数）
             const batchSize = 10;
@@ -840,55 +920,71 @@
                         allKeywords[keyword]++;
                     });
                     
-                    // 统计日期
+                    // 按月份分组
                     if (date) {
-                        if (!dateGroups[date]) {
-                            dateGroups[date] = 0;
+                        const month = date.substring(0, 7); // YYYY-MM
+                        if (!monthGroups[month]) {
+                            monthGroups[month] = { files: [], count: 0 };
                         }
-                        dateGroups[date]++;
+                        monthGroups[month].files.push({
+                            path: file.path,
+                            date: date,
+                            keywords: keywords
+                        });
+                        monthGroups[month].count++;
                     }
                 });
             }
             
-            // 渲染关键词标签
-            renderKeywordTags();
+            // 对每个月份内的文章按日期排序（从新到旧）
+            Object.keys(monthGroups).forEach(month => {
+                monthGroups[month].files.sort((a, b) => b.date.localeCompare(a.date));
+            });
+            
+            // 渲染关键词列表
+            renderKeywordList();
             // 渲染日期索引
             renderDateIndex();
         }
         
-        // 渲染关键词标签
-        function renderKeywordTags() {
-            const keywordTagsEl = document.getElementById('keywordTags');
-            keywordTagsEl.innerHTML = '';
+        // 渲染关键词列表（列布局，按使用率排序）
+        function renderKeywordList() {
+            const keywordListEl = document.getElementById('keywordList');
+            keywordListEl.innerHTML = '';
             
             const sortedKeywords = Object.entries(allKeywords)
-                .sort((a, b) => b[1] - a[1]); // 按文件数量排序
+                .sort((a, b) => b[1] - a[1]); // 按文件数量排序（从高到低）
+            
+            if (sortedKeywords.length === 0) {
+                keywordListEl.innerHTML = '<div style="padding: 10px; text-align: center; color: #999; font-size: 0.85em;">暂无关键词</div>';
+                return;
+            }
             
             sortedKeywords.forEach(([keyword, count]) => {
-                const tag = document.createElement('span');
-                tag.className = 'keyword-tag';
+                const item = document.createElement('div');
+                item.className = 'keyword-item';
                 if (selectedKeywords.has(keyword)) {
-                    tag.classList.add('active');
+                    item.classList.add('active');
                 }
-                tag.textContent = `${keyword} `;
                 
-                const countSpan = document.createElement('span');
-                countSpan.className = 'count';
-                countSpan.textContent = `(${count})`;
-                tag.appendChild(countSpan);
+                item.innerHTML = `
+                    <span class="keyword-name">${keyword}</span>
+                    <span class="keyword-count">${count}</span>
+                `;
                 
-                tag.addEventListener('click', () => {
+                item.addEventListener('click', () => {
                     if (selectedKeywords.has(keyword)) {
                         selectedKeywords.delete(keyword);
-                        tag.classList.remove('active');
+                        item.classList.remove('active');
                     } else {
                         selectedKeywords.add(keyword);
-                        tag.classList.add('active');
+                        item.classList.add('active');
                     }
                     updateFileList();
+                    renderDateIndex(); // 更新日期索引以反映筛选
                 });
                 
-                keywordTagsEl.appendChild(tag);
+                keywordListEl.appendChild(item);
             });
         }
         
@@ -903,88 +999,140 @@
             });
         }
         
-        // 根据日期过滤文件
-        function filterByDate(files) {
-            if (!selectedDate) return files;
+        // 根据月份过滤文件
+        function filterByMonth(files) {
+            if (!selectedMonth) return files;
             
             return files.filter(file => {
                 const fileDate = fileDates[file.path];
-                return fileDate === selectedDate;
+                if (!fileDate) return false;
+                return fileDate.startsWith(selectedMonth);
             });
         }
         
-        // 渲染日期索引
+        // 渲染日期索引（按月份分组）
         function renderDateIndex() {
             const dateListEl = document.getElementById('dateList');
             dateListEl.innerHTML = '';
             
-            // 添加"全部"选项
-            const allItem = document.createElement('div');
-            allItem.className = 'date-item';
-            if (!selectedDate) {
-                allItem.classList.add('active');
-            }
-            allItem.innerHTML = `
-                <span class="date-label">全部</span>
-                <span class="date-count">${allFiles.length}</span>
-            `;
-            allItem.addEventListener('click', () => {
-                selectedDate = null;
-                updateDateList();
-                updateFileList();
-            });
-            dateListEl.appendChild(allItem);
+            // 获取筛选后的文件（根据关键词）
+            const filteredByKeywords = filterByKeywords(allFiles);
             
-            // 按日期排序（从新到旧）
-            const sortedDates = Object.entries(dateGroups)
+            // 重新计算月份分组（仅包含筛选后的文件）
+            const filteredMonthGroups = {};
+            filteredByKeywords.forEach(file => {
+                const date = fileDates[file.path];
+                if (date) {
+                    const month = date.substring(0, 7);
+                    if (!filteredMonthGroups[month]) {
+                        filteredMonthGroups[month] = { files: [], count: 0 };
+                    }
+                    filteredMonthGroups[month].files.push({
+                        path: file.path,
+                        date: date,
+                        keywords: fileKeywords[file.path] || []
+                    });
+                    filteredMonthGroups[month].count++;
+                }
+            });
+            
+            // 对每个月份内的文章按日期排序
+            Object.keys(filteredMonthGroups).forEach(month => {
+                filteredMonthGroups[month].files.sort((a, b) => b.date.localeCompare(a.date));
+            });
+            
+            // 按月份排序（从新到旧）
+            const sortedMonths = Object.entries(filteredMonthGroups)
                 .sort((a, b) => b[0].localeCompare(a[0]));
             
-            sortedDates.forEach(([date, count]) => {
-                const item = document.createElement('div');
-                item.className = 'date-item';
-                if (selectedDate === date) {
-                    item.classList.add('active');
+            if (sortedMonths.length === 0) {
+                dateListEl.innerHTML = '<div style="padding: 10px; text-align: center; color: #999; font-size: 0.85em;">暂无日期索引</div>';
+                return;
+            }
+            
+            sortedMonths.forEach(([month, data]) => {
+                const monthGroup = document.createElement('div');
+                monthGroup.className = 'month-group';
+                if (expandedMonths.has(month)) {
+                    monthGroup.classList.add('expanded');
                 }
                 
-                // 格式化日期显示
-                const dateObj = new Date(date + 'T00:00:00');
-                const formattedDate = dateObj.toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
+                // 格式化月份显示
+                const [year, monthNum] = month.split('-');
+                const formattedMonth = `${year}年${parseInt(monthNum)}月`;
                 
-                item.innerHTML = `
-                    <span class="date-label">${formattedDate}</span>
-                    <span class="date-count">${count}</span>
+                // 月份头部
+                const header = document.createElement('div');
+                header.className = 'month-header';
+                if (selectedMonth === month) {
+                    header.classList.add('active');
+                }
+                header.innerHTML = `
+                    <span class="month-toggle">▶</span>
+                    <span class="month-label">${formattedMonth}</span>
+                    <span class="month-count">${data.count}</span>
                 `;
                 
-                item.addEventListener('click', () => {
-                    selectedDate = date;
-                    updateDateList();
-                    updateFileList();
+                // 文章列表
+                const articlesContainer = document.createElement('div');
+                articlesContainer.className = 'month-articles';
+                
+                data.files.forEach(fileInfo => {
+                    const fileName = fileInfo.path.split('/').pop().replace('.md', '');
+                    const dateObj = new Date(fileInfo.date + 'T00:00:00');
+                    const dayStr = dateObj.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+                    const keywordsStr = fileInfo.keywords.slice(0, 3).join(', ');
+                    
+                    const articlePreview = document.createElement('div');
+                    articlePreview.className = 'article-preview';
+                    if (currentFile && currentFile.path === fileInfo.path) {
+                        articlePreview.classList.add('active');
+                    }
+                    articlePreview.innerHTML = `
+                        <div class="article-preview-title">${fileName}</div>
+                        <div class="article-preview-meta">
+                            <span class="article-preview-date">${dayStr}</span>
+                            ${keywordsStr ? `<span class="article-preview-keywords">${keywordsStr}</span>` : ''}
+                        </div>
+                    `;
+                    
+                    articlePreview.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // 找到对应的文件对象
+                        const file = allFiles.find(f => f.path === fileInfo.path);
+                        if (file) {
+                            currentFile = file;
+                            loadFileContent(file);
+                            // 更新文章预览的选中状态
+                            document.querySelectorAll('.article-preview').forEach(ap => ap.classList.remove('active'));
+                            articlePreview.classList.add('active');
+                            // 同步更新文件树的选中状态
+                            document.querySelectorAll('.tree-file').forEach(f => {
+                                f.classList.remove('active');
+                                if (f.dataset.path === fileInfo.path) {
+                                    f.classList.add('active');
+                                }
+                            });
+                        }
+                    });
+                    
+                    articlesContainer.appendChild(articlePreview);
                 });
                 
-                dateListEl.appendChild(item);
-            });
-        }
-        
-        // 更新日期列表的选中状态
-        function updateDateList() {
-            const items = document.querySelectorAll('.date-item');
-            items.forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            items.forEach((item, index) => {
-                if (index === 0 && !selectedDate) {
-                    item.classList.add('active');
-                } else if (index > 0) {
-                    const date = Object.keys(dateGroups).sort((a, b) => b.localeCompare(a))[index - 1];
-                    if (selectedDate === date) {
-                        item.classList.add('active');
+                // 点击月份头部：展开/折叠文章列表
+                header.addEventListener('click', () => {
+                    if (expandedMonths.has(month)) {
+                        expandedMonths.delete(month);
+                        monthGroup.classList.remove('expanded');
+                    } else {
+                        expandedMonths.add(month);
+                        monthGroup.classList.add('expanded');
                     }
-                }
+                });
+                
+                monthGroup.appendChild(header);
+                monthGroup.appendChild(articlesContainer);
+                dateListEl.appendChild(monthGroup);
             });
         }
         
@@ -1038,6 +1186,8 @@
                         fileDiv.classList.add('active');
                         currentFile = node.data;
                         loadFileContent(node.data);
+                        // 同步更新文章预览的选中状态
+                        document.querySelectorAll('.article-preview').forEach(ap => ap.classList.remove('active'));
                     });
                     
                     container.appendChild(fileDiv);
@@ -1067,6 +1217,8 @@
                     fileDiv.classList.add('active');
                     currentFile = file;
                     loadFileContent(file);
+                    // 同步更新文章预览的选中状态
+                    document.querySelectorAll('.article-preview').forEach(ap => ap.classList.remove('active'));
                 });
                 
                 container.appendChild(fileDiv);
@@ -1080,9 +1232,9 @@
             
             fileTreeEl.innerHTML = '';
             
-            // 先根据关键词过滤，再根据日期过滤
+            // 先根据关键词过滤，再根据月份过滤
             let filesToShow = filterByKeywords(allFiles);
-            filesToShow = filterByDate(filesToShow);
+            filesToShow = filterByMonth(filesToShow);
             
             if (searchQuery) {
                 // 搜索模式：显示扁平列表
