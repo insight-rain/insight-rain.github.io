@@ -1418,15 +1418,19 @@
                 
                 const text = await response.text();
                 
-                // 提取关键词
-                const keywordMatch = text.match(/##\s*关键词\s*\n\s*\n(.*?)(?:\n##|\n---|$)/s);
+                // 提取关键词 - 支持多种格式
+                // 格式1: ## 关键词\n\n关键词内容
+                // 格式2: ## 关键词\n关键词内容
+                const keywordMatch = text.match(/##\s*关键词\s*\n+([^\n#][^\n]*?)(?:\n\n|\n##|\n---|$)/);
                 let keywords = [];
                 if (keywordMatch) {
                     const keywordLine = keywordMatch[1].trim();
                     keywords = keywordLine.split(',').map(k => k.trim()).filter(k => k);
                 }
                 
-                // 提取日期
+                // 提取日期 - 支持多种格式
+                // 格式1: **发布时间**: 2026-01-15
+                // 格式2: **发布时间**: 2026-01-15T06:16:22Z
                 const dateMatch = text.match(/\*\*发布时间\*\*:\s*(\d{4}-\d{2}-\d{2})/);
                 let date = null;
                 if (dateMatch) {
@@ -2048,6 +2052,7 @@
         // 缓存相关常量
         const CACHE_KEY = 'md_file_list_cache';
         const CACHE_METADATA_KEY = 'md_metadata_cache';
+        const CACHE_VERSION = 'v2'; // 版本号，更新后自动清除旧缓存
         const CACHE_DURATION = 10 * 60 * 1000; // 缓存10分钟
         
         // 从缓存获取数据
@@ -2055,8 +2060,9 @@
             try {
                 const cached = localStorage.getItem(key);
                 if (cached) {
-                    const { data, timestamp } = JSON.parse(cached);
-                    if (Date.now() - timestamp < CACHE_DURATION) {
+                    const { data, timestamp, version } = JSON.parse(cached);
+                    // 检查版本号和时间
+                    if (version === CACHE_VERSION && Date.now() - timestamp < CACHE_DURATION) {
                         return data;
                     }
                 }
@@ -2071,12 +2077,36 @@
             try {
                 localStorage.setItem(key, JSON.stringify({
                     data: data,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    version: CACHE_VERSION
                 }));
             } catch (e) {
                 console.warn('Cache write error:', e);
             }
         }
+        
+        // 启动时清理旧版本缓存
+        function cleanOldCache() {
+            try {
+                [CACHE_KEY, CACHE_METADATA_KEY].forEach(key => {
+                    const cached = localStorage.getItem(key);
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (parsed.version !== CACHE_VERSION) {
+                            localStorage.removeItem(key);
+                            console.log('Cleared old cache:', key);
+                        }
+                    }
+                });
+            } catch (e) {
+                // 解析失败，清除缓存
+                localStorage.removeItem(CACHE_KEY);
+                localStorage.removeItem(CACHE_METADATA_KEY);
+            }
+        }
+        
+        // 页面加载时清理旧缓存
+        cleanOldCache();
         
         async function loadMarkdownFiles() {
             const loadingEl = document.getElementById('loading');
