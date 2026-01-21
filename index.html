@@ -323,6 +323,210 @@
             white-space: nowrap;
         }
         
+        /* 右侧文章卡片网格 */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            padding: 10px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .articles-grid-header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e1e8ed;
+            margin-bottom: 10px;
+        }
+        
+        .articles-grid-title {
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .articles-grid-count {
+            color: #888;
+            font-size: 0.95em;
+        }
+        
+        .articles-grid-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            gap: 6px;
+        }
+        
+        .filter-tag-remove {
+            cursor: pointer;
+            opacity: 0.8;
+            font-size: 1.1em;
+            line-height: 1;
+        }
+        
+        .filter-tag-remove:hover {
+            opacity: 1;
+        }
+        
+        .article-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .article-card:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+        
+        .article-card.active {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .article-card-header {
+            padding: 20px 20px 15px;
+            background: linear-gradient(135deg, #f8f9fc 0%, #fff 100%);
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .article-card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .article-card-path {
+            font-size: 0.8em;
+            color: #999;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .article-card-body {
+            padding: 15px 20px;
+        }
+        
+        .article-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .article-card-date {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .article-card-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .article-card-keyword {
+            padding: 3px 10px;
+            background: #f0f2f5;
+            color: #555;
+            border-radius: 10px;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+        
+        .article-card-keyword:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .article-card-footer {
+            padding: 12px 20px;
+            background: #fafbfc;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .article-card-btn {
+            padding: 6px 14px;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85em;
+            transition: background 0.2s;
+        }
+        
+        .article-card-btn:hover {
+            background: #5568d3;
+        }
+        
+        .no-articles {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .no-articles-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .no-articles-text {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .no-articles-hint {
+            font-size: 0.9em;
+            color: #bbb;
+        }
+        
+        .clear-filters-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        
+        .clear-filters-btn:hover {
+            background: #5568d3;
+        }
+        
         .file-tree-container {
             flex: 1;
             overflow-y: auto;
@@ -613,6 +817,17 @@
             background: #5a6268;
         }
         
+        .btn-back {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-back:hover {
+            background: #667eea;
+            color: white;
+        }
+        
         .comments-section {
             border-top: 2px solid #e1e8ed;
             padding: 40px 50px;
@@ -723,9 +938,11 @@
                 <div id="contentLoading" class="loading" style="display: none;">正在加载内容...</div>
                 <div id="contentError" class="error" style="display: none;"></div>
                 <div id="markdownContent" style="display: none;"></div>
+                <div id="articlesGrid" class="articles-grid" style="display: none;"></div>
                 <div id="welcomeMessage" style="text-align: center; padding: 60px 20px; color: #999;">
                     <h2 style="color: #667eea; margin-bottom: 15px;">👋 欢迎</h2>
                     <p>请从左侧选择要查看的 Markdown 文件</p>
+                    <p style="margin-top: 10px; font-size: 0.9em;">或使用关键词和日期筛选文章</p>
                 </div>
             </div>
             <div id="commentsSection" class="comments-section" style="display: none;">
@@ -982,6 +1199,7 @@
                     }
                     updateFileList();
                     renderDateIndex(); // 更新日期索引以反映筛选
+                    renderArticlesGrid(); // 更新右侧文章网格
                 });
                 
                 keywordListEl.appendChild(item);
@@ -1008,6 +1226,220 @@
                 if (!fileDate) return false;
                 return fileDate.startsWith(selectedMonth);
             });
+        }
+        
+        // 渲染右侧文章卡片网格
+        function renderArticlesGrid() {
+            const articlesGridEl = document.getElementById('articlesGrid');
+            const welcomeMessageEl = document.getElementById('welcomeMessage');
+            const markdownContentEl = document.getElementById('markdownContent');
+            const commentsSectionEl = document.getElementById('commentsSection');
+            
+            // 如果没有筛选条件，不显示文章网格
+            if (selectedKeywords.size === 0 && !selectedMonth) {
+                articlesGridEl.style.display = 'none';
+                if (!currentFile) {
+                    welcomeMessageEl.style.display = 'block';
+                }
+                return;
+            }
+            
+            // 隐藏欢迎消息和文章内容
+            welcomeMessageEl.style.display = 'none';
+            markdownContentEl.style.display = 'none';
+            commentsSectionEl.style.display = 'none';
+            articlesGridEl.style.display = 'grid';
+            
+            // 获取筛选后的文件
+            let filteredFiles = filterByKeywords(allFiles);
+            filteredFiles = filterByMonth(filteredFiles);
+            
+            // 构建筛选标签显示
+            let filterTagsHtml = '';
+            selectedKeywords.forEach(keyword => {
+                filterTagsHtml += `<span class="filter-tag">
+                    🏷️ ${keyword}
+                    <span class="filter-tag-remove" data-type="keyword" data-value="${keyword}">×</span>
+                </span>`;
+            });
+            if (selectedMonth) {
+                const [year, monthNum] = selectedMonth.split('-');
+                const formattedMonth = `${year}年${parseInt(monthNum)}月`;
+                filterTagsHtml += `<span class="filter-tag">
+                    📅 ${formattedMonth}
+                    <span class="filter-tag-remove" data-type="month" data-value="${selectedMonth}">×</span>
+                </span>`;
+            }
+            
+            // 构建头部
+            let html = `
+                <div class="articles-grid-header">
+                    <div>
+                        <div class="articles-grid-title">📚 筛选结果</div>
+                        <div class="articles-grid-filters">${filterTagsHtml}</div>
+                    </div>
+                    <div class="articles-grid-count">共 ${filteredFiles.length} 篇文章</div>
+                </div>
+            `;
+            
+            if (filteredFiles.length === 0) {
+                html += `
+                    <div class="no-articles">
+                        <div class="no-articles-icon">📭</div>
+                        <div class="no-articles-text">没有找到符合条件的文章</div>
+                        <div class="no-articles-hint">尝试调整筛选条件</div>
+                        <button class="clear-filters-btn" onclick="clearAllFilters()">清除所有筛选</button>
+                    </div>
+                `;
+            } else {
+                // 按日期排序（从新到旧）
+                filteredFiles.sort((a, b) => {
+                    const dateA = fileDates[a.path] || '0000-00-00';
+                    const dateB = fileDates[b.path] || '0000-00-00';
+                    return dateB.localeCompare(dateA);
+                });
+                
+                filteredFiles.forEach(file => {
+                    const fileName = file.path.split('/').pop().replace('.md', '');
+                    const filePath = file.path;
+                    const date = fileDates[file.path];
+                    const keywords = fileKeywords[file.path] || [];
+                    
+                    // 格式化日期
+                    let formattedDate = '未知日期';
+                    if (date) {
+                        const dateObj = new Date(date + 'T00:00:00');
+                        formattedDate = dateObj.toLocaleDateString('zh-CN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    }
+                    
+                    // 关键词标签
+                    const keywordsHtml = keywords.map(k => 
+                        `<span class="article-card-keyword" data-keyword="${k}">${k}</span>`
+                    ).join('');
+                    
+                    const isActive = currentFile && currentFile.path === file.path;
+                    
+                    html += `
+                        <div class="article-card ${isActive ? 'active' : ''}" data-path="${filePath}">
+                            <div class="article-card-header">
+                                <div class="article-card-title">${fileName}</div>
+                                <div class="article-card-path">${filePath}</div>
+                            </div>
+                            <div class="article-card-body">
+                                <div class="article-card-meta">
+                                    <div class="article-card-date">📅 ${formattedDate}</div>
+                                </div>
+                                <div class="article-card-keywords">${keywordsHtml || '<span style="color: #999; font-size: 0.85em;">暂无关键词</span>'}</div>
+                            </div>
+                            <div class="article-card-footer">
+                                <span class="article-card-btn">阅读全文 →</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            articlesGridEl.innerHTML = html;
+            
+            // 绑定卡片点击事件
+            articlesGridEl.querySelectorAll('.article-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const path = card.dataset.path;
+                    const file = allFiles.find(f => f.path === path);
+                    if (file) {
+                        // 更新当前文件
+                        currentFile = file;
+                        // 隐藏文章网格，显示文章内容
+                        articlesGridEl.style.display = 'none';
+                        loadFileContent(file);
+                        // 同步更新文件树选中状态
+                        document.querySelectorAll('.tree-file').forEach(f => {
+                            f.classList.remove('active');
+                            if (f.dataset.path === path) {
+                                f.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // 绑定关键词标签点击事件（点击可添加该关键词筛选）
+            articlesGridEl.querySelectorAll('.article-card-keyword').forEach(tag => {
+                tag.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const keyword = tag.dataset.keyword;
+                    if (!selectedKeywords.has(keyword)) {
+                        selectedKeywords.add(keyword);
+                        updateKeywordListUI();
+                        updateFileList();
+                        renderArticlesGrid();
+                        renderDateIndex();
+                    }
+                });
+            });
+            
+            // 绑定筛选标签移除事件
+            articlesGridEl.querySelectorAll('.filter-tag-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const type = btn.dataset.type;
+                    const value = btn.dataset.value;
+                    
+                    if (type === 'keyword') {
+                        selectedKeywords.delete(value);
+                        updateKeywordListUI();
+                    } else if (type === 'month') {
+                        selectedMonth = null;
+                        updateMonthListUI();
+                    }
+                    
+                    updateFileList();
+                    renderArticlesGrid();
+                    renderDateIndex();
+                });
+            });
+        }
+        
+        // 更新关键词列表UI状态
+        function updateKeywordListUI() {
+            document.querySelectorAll('.keyword-item').forEach(item => {
+                const keyword = item.querySelector('.keyword-name').textContent;
+                if (selectedKeywords.has(keyword)) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+        
+        // 更新月份列表UI状态
+        function updateMonthListUI() {
+            document.querySelectorAll('.month-header').forEach(header => {
+                header.classList.remove('active');
+            });
+        }
+        
+        // 清除所有筛选（全局函数）
+        window.clearAllFilters = function() {
+            selectedKeywords.clear();
+            selectedMonth = null;
+            updateKeywordListUI();
+            updateMonthListUI();
+            updateFileList();
+            renderArticlesGrid();
+            renderDateIndex();
+        }
+        
+        // 返回筛选结果（全局函数）
+        window.backToFilterResults = function() {
+            document.getElementById('markdownContent').style.display = 'none';
+            document.getElementById('commentsSection').style.display = 'none';
+            renderArticlesGrid();
+            document.querySelector('.content-area').scrollTop = 0;
         }
         
         // 渲染日期索引（按月份分组）
@@ -1119,14 +1551,38 @@
                     articlesContainer.appendChild(articlePreview);
                 });
                 
-                // 点击月份头部：展开/折叠文章列表
-                header.addEventListener('click', () => {
-                    if (expandedMonths.has(month)) {
-                        expandedMonths.delete(month);
-                        monthGroup.classList.remove('expanded');
+                // 点击月份头部：选择该月份作为筛选条件并展开
+                header.addEventListener('click', (e) => {
+                    // 检查是否点击了展开按钮
+                    const isToggleClick = e.target.classList.contains('month-toggle');
+                    
+                    if (isToggleClick) {
+                        // 仅展开/折叠
+                        e.stopPropagation();
+                        if (expandedMonths.has(month)) {
+                            expandedMonths.delete(month);
+                            monthGroup.classList.remove('expanded');
+                        } else {
+                            expandedMonths.add(month);
+                            monthGroup.classList.add('expanded');
+                        }
                     } else {
-                        expandedMonths.add(month);
-                        monthGroup.classList.add('expanded');
+                        // 选择月份作为筛选条件
+                        if (selectedMonth === month) {
+                            // 取消选择
+                            selectedMonth = null;
+                            header.classList.remove('active');
+                        } else {
+                            // 选择该月份
+                            document.querySelectorAll('.month-header').forEach(h => h.classList.remove('active'));
+                            selectedMonth = month;
+                            header.classList.add('active');
+                            // 自动展开
+                            expandedMonths.add(month);
+                            monthGroup.classList.add('expanded');
+                        }
+                        updateFileList();
+                        renderArticlesGrid();
                     }
                 });
                 
@@ -1303,11 +1759,12 @@
             const welcomeMessageEl = document.getElementById('welcomeMessage');
             const commentsSectionEl = document.getElementById('commentsSection');
             
-            // 隐藏欢迎消息和之前的错误
+            // 隐藏欢迎消息、文章网格和之前的错误
             welcomeMessageEl.style.display = 'none';
             contentErrorEl.style.display = 'none';
             markdownContentEl.style.display = 'none';
             commentsSectionEl.style.display = 'none';
+            document.getElementById('articlesGrid').style.display = 'none';
             contentLoadingEl.style.display = 'block';
             
             try {
@@ -1333,10 +1790,16 @@
                 const fileName = file.path.split('/').pop();
                 const githubUrl = `https://github.com/${repoInfo.owner}/${repoInfo.repo}/blob/main/${file.path}`;
                 
+                // 检查是否有筛选条件，显示返回按钮
+                const hasFilters = selectedKeywords.size > 0 || selectedMonth;
+                const backBtnHtml = hasFilters ? 
+                    `<a href="javascript:void(0)" class="btn btn-back" onclick="backToFilterResults()">← 返回筛选结果</a>` : '';
+                
                 markdownContentEl.innerHTML = `
                     <div class="file-header">
                         <h2>${fileName}</h2>
                         <div class="file-actions">
+                            ${backBtnHtml}
                             <a href="${rawUrl}" target="_blank" class="btn">📄 查看原始文件</a>
                             <a href="${githubUrl}" target="_blank" class="btn btn-secondary">🔗 在 GitHub 查看</a>
                         </div>
