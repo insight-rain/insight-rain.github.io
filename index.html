@@ -1704,6 +1704,39 @@
             }
         }
         
+        // 缓存相关常量
+        const CACHE_KEY = 'md_file_list_cache';
+        const CACHE_METADATA_KEY = 'md_metadata_cache';
+        const CACHE_DURATION = 10 * 60 * 1000; // 缓存10分钟
+        
+        // 从缓存获取数据
+        function getFromCache(key) {
+            try {
+                const cached = localStorage.getItem(key);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < CACHE_DURATION) {
+                        return data;
+                    }
+                }
+            } catch (e) {
+                console.warn('Cache read error:', e);
+            }
+            return null;
+        }
+        
+        // 保存到缓存
+        function saveToCache(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify({
+                    data: data,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.warn('Cache write error:', e);
+            }
+        }
+        
         async function loadMarkdownFiles() {
             const loadingEl = document.getElementById('loading');
             const errorEl = document.getElementById('error');
@@ -1711,11 +1744,53 @@
             
             try {
                 const repoInfo = getRepoInfo();
+                
+                // 尝试从缓存获取
+                const cachedFiles = getFromCache(CACHE_KEY);
+                if (cachedFiles) {
+                    console.log('Using cached file list');
+                    allFiles = cachedFiles;
+                    loadingEl.style.display = 'none';
+                    fileTreeEl.style.display = 'block';
+                    
+                    // 尝试从缓存获取元数据
+                    const cachedMetadata = getFromCache(CACHE_METADATA_KEY);
+                    if (cachedMetadata) {
+                        fileKeywords = cachedMetadata.fileKeywords || {};
+                        allKeywords = cachedMetadata.allKeywords || {};
+                        fileDates = cachedMetadata.fileDates || {};
+                        monthGroups = cachedMetadata.monthGroups || {};
+                        renderKeywordList();
+                        renderDateIndex();
+                    } else {
+                        extractAllMetadata().then(() => {
+                            updateFileList();
+                        });
+                    }
+                    
+                    updateFileList();
+                    return;
+                }
+                
                 const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/git/trees/main?recursive=1`;
                 
                 const response = await fetch(apiUrl);
                 
                 if (!response.ok) {
+                    if (response.status === 403) {
+                        // 检查是否是频率限制
+                        const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+                        const rateLimitReset = response.headers.get('X-RateLimit-Reset');
+                        
+                        let errorMsg = 'GitHub API 请求频率超限（每小时60次）';
+                        if (rateLimitReset) {
+                            const resetTime = new Date(parseInt(rateLimitReset) * 1000);
+                            const waitMinutes = Math.ceil((resetTime - Date.now()) / 60000);
+                            errorMsg += `\n请等待约 ${waitMinutes} 分钟后重试`;
+                        }
+                        errorMsg += '\n\n提示：刷新页面会消耗请求次数，建议稍后再试';
+                        throw new Error(errorMsg);
+                    }
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
@@ -1728,6 +1803,9 @@
                     !file.path.startsWith('.')
                 );
                 
+                // 保存到缓存
+                saveToCache(CACHE_KEY, allFiles);
+                
                 if (allFiles.length === 0) {
                     loadingEl.textContent = '未找到 Markdown 文件';
                     return;
@@ -1739,6 +1817,13 @@
                 
                 // 提取关键词和日期（异步，不阻塞文件列表显示）
                 extractAllMetadata().then(() => {
+                    // 缓存元数据
+                    saveToCache(CACHE_METADATA_KEY, {
+                        fileKeywords,
+                        allKeywords,
+                        fileDates,
+                        monthGroups
+                    });
                     updateFileList();
                 });
                 
@@ -1748,8 +1833,27 @@
                 console.error('Error loading files:', error);
                 loadingEl.style.display = 'none';
                 errorEl.style.display = 'block';
-                errorEl.textContent = `加载文件列表失败: ${error.message}`;
+                errorEl.innerHTML = `
+                    <div style="text-align: left;">
+                        <strong>⚠️ 加载失败</strong>
+                        <pre style="white-space: pre-wrap; margin-top: 10px; font-size: 0.9em;">${error.message}</pre>
+                        <button onclick="location.reload()" style="margin-top: 15px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            🔄 重试
+                        </button>
+                        <button onclick="clearCache()" style="margin-top: 15px; margin-left: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            🗑️ 清除缓存
+                        </button>
+                    </div>
+                `;
             }
+        }
+        
+        // 清除缓存（全局函数）
+        window.clearCache = function() {
+            localStorage.removeItem(CACHE_KEY);
+            localStorage.removeItem(CACHE_METADATA_KEY);
+            alert('缓存已清除，将重新加载');
+            location.reload();
         }
         
         async function loadFileContent(file) {
