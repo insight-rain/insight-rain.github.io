@@ -1928,6 +1928,25 @@
         window.backToFilterResults = function() {
             document.getElementById('markdownContent').style.display = 'none';
             document.getElementById('commentsSection').style.display = 'none';
+            
+            // 在手机上确保侧边栏展开，方便用户添加/删除标签
+            const sidebar = document.getElementById('sidebar');
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // 强制展开侧边栏
+                sidebar.classList.remove('collapsed');
+                // 滚动到页面顶部，让用户看到筛选选项
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            
+            // 先重新渲染关键词列表和日期索引，确保事件绑定正确
+            if (Object.keys(allKeywords).length > 0) {
+                renderKeywordList();
+            }
+            renderDateIndex();
+            
+            // 然后渲染文章网格
             renderArticlesGrid();
             document.querySelector('.content-area').scrollTop = 0;
         }
