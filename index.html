@@ -1437,18 +1437,19 @@
         async function fetchFileContent(filePath) {
             const repoInfo = getRepoInfo();
             
-            // 主源：raw.githubusercontent.com
-            const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${filePath}`;
-            
-            // 备用源：jsDelivr CDN（国内访问更稳定）
+            // 优先使用 CDN（国内访问更稳定）
             const cdnUrl = `https://cdn.jsdelivr.net/gh/${repoInfo.owner}/${repoInfo.repo}@main/${filePath}`;
             
-            // 备用源2：GitHub API（会消耗 API 限额）
+            // 备用源1：raw.githubusercontent.com
+            const rawUrl = `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${filePath}`;
+            
+            // 备用源2：GitHub API（会消耗 API 限额，最后使用）
             const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${filePath}?ref=main`;
             
+            // 按优先级排序：CDN > Raw > API
             const sources = [
-                { url: rawUrl, name: 'GitHub Raw', isApi: false },
                 { url: cdnUrl, name: 'jsDelivr CDN', isApi: false },
+                { url: rawUrl, name: 'GitHub Raw', isApi: false },
                 { url: apiUrl, name: 'GitHub API', isApi: true }
             ];
             
@@ -2200,7 +2201,7 @@
         // 缓存相关常量
         const CACHE_KEY = 'md_file_list_cache';
         const CACHE_METADATA_KEY = 'md_metadata_cache';
-        const CACHE_VERSION = 'v7'; // 版本号，更新后自动清除旧缓存
+        const CACHE_VERSION = 'v8'; // 版本号，更新后自动清除旧缓存
         const CACHE_DURATION = 10 * 60 * 1000; // 缓存10分钟
         
         // 从缓存获取数据
@@ -2256,6 +2257,80 @@
         // 页面加载时清理旧缓存
         cleanOldCache();
         
+        // 尝试加载 JSON 索引文件（参考 yzr 项目）
+        // 如果存在 metadata_index.json 文件，可以大幅提升加载速度
+        // 格式示例：
+        // [
+        //   { "path": "2026-01-11_to_2026-01-17/001.md", "keywords": ["AI", "CV"], "date": "2026-01-15" },
+        //   { "path": "2026-01-11_to_2026-01-17/002.md", "keywords": ["NLP"], "date": "2026-01-16" }
+        // ]
+        async function tryLoadMetadataIndex() {
+            const repoInfo = getRepoInfo();
+            const indexUrls = [
+                `https://cdn.jsdelivr.net/gh/${repoInfo.owner}/${repoInfo.repo}@main/metadata_index.json`,
+                `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/metadata_index.json`,
+                `metadata_index.json` // 本地文件
+            ];
+            
+            for (const url of indexUrls) {
+                try {
+                    const response = await fetchWithTimeout(url, 5000);
+                    if (response.ok) {
+                        const index = await response.json();
+                        console.log('Loaded metadata index from:', url);
+                        return index;
+                    }
+                } catch (e) {
+                    // 继续尝试下一个源
+                }
+            }
+            return null;
+        }
+        
+        // 从索引文件构建元数据
+        function buildMetadataFromIndex(index) {
+            fileKeywords = {};
+            allKeywords = {};
+            fileDates = {};
+            monthGroups = {};
+            
+            index.forEach(item => {
+                const path = item.path;
+                const keywords = item.keywords || [];
+                const date = item.date || null;
+                
+                fileKeywords[path] = keywords;
+                fileDates[path] = date;
+                
+                // 统计关键词
+                keywords.forEach(keyword => {
+                    if (!allKeywords[keyword]) {
+                        allKeywords[keyword] = 0;
+                    }
+                    allKeywords[keyword]++;
+                });
+                
+                // 按月份分组
+                if (date) {
+                    const month = date.substring(0, 7); // YYYY-MM
+                    if (!monthGroups[month]) {
+                        monthGroups[month] = { files: [], count: 0 };
+                    }
+                    monthGroups[month].files.push({
+                        path: path,
+                        date: date,
+                        keywords: keywords
+                    });
+                    monthGroups[month].count++;
+                }
+            });
+            
+            // 对每个月份内的文章按日期排序
+            Object.keys(monthGroups).forEach(month => {
+                monthGroups[month].files.sort((a, b) => b.date.localeCompare(a.date));
+            });
+        }
+        
         async function loadMarkdownFiles() {
             const loadingEl = document.getElementById('loading');
             const errorEl = document.getElementById('error');
@@ -2266,48 +2341,44 @@
                 
                 // 尝试从缓存获取
                 const cachedFiles = getFromCache(CACHE_KEY);
-                if (cachedFiles) {
-                    console.log('Using cached file list');
+                const cachedMetadata = getFromCache(CACHE_METADATA_KEY);
+                
+                if (cachedFiles && cachedMetadata) {
+                    console.log('Using cached file list and metadata');
                     allFiles = cachedFiles;
+                    fileKeywords = cachedMetadata.fileKeywords || {};
+                    allKeywords = cachedMetadata.allKeywords || {};
+                    fileDates = cachedMetadata.fileDates || {};
+                    monthGroups = cachedMetadata.monthGroups || {};
+                    
                     loadingEl.style.display = 'none';
                     fileTreeEl.style.display = 'block';
-                    
-                    // 尝试从缓存获取元数据
-                    const cachedMetadata = getFromCache(CACHE_METADATA_KEY);
-                    if (cachedMetadata) {
-                        fileKeywords = cachedMetadata.fileKeywords || {};
-                        allKeywords = cachedMetadata.allKeywords || {};
-                        fileDates = cachedMetadata.fileDates || {};
-                        monthGroups = cachedMetadata.monthGroups || {};
-                        renderKeywordList();
-                        renderDateIndex();
-                    } else {
-                        extractAllMetadata().then(() => {
-                            updateFileList();
-                        });
-                    }
-                    
+                    renderKeywordList();
+                    renderDateIndex();
                     updateFileList();
                     return;
                 }
                 
+                // 第一步：尝试加载 JSON 索引文件（更快更稳定）
+                loadingEl.textContent = '正在加载索引文件...';
+                const metadataIndex = await tryLoadMetadataIndex();
+                
+                // 第二步：获取文件列表
+                loadingEl.textContent = '正在加载文件列表...';
                 const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/git/trees/main?recursive=1`;
                 
-                const response = await fetch(apiUrl);
+                const response = await fetchWithTimeout(apiUrl, 10000);
                 
                 if (!response.ok) {
                     if (response.status === 403) {
-                        // 检查是否是频率限制
-                        const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
                         const rateLimitReset = response.headers.get('X-RateLimit-Reset');
-                        
                         let errorMsg = 'GitHub API 请求频率超限（每小时60次）';
                         if (rateLimitReset) {
                             const resetTime = new Date(parseInt(rateLimitReset) * 1000);
                             const waitMinutes = Math.ceil((resetTime - Date.now()) / 60000);
                             errorMsg += `\n请等待约 ${waitMinutes} 分钟后重试`;
                         }
-                        errorMsg += '\n\n提示：刷新页面会消耗请求次数，建议稍后再试';
+                        errorMsg += '\n\n提示：可以创建 metadata_index.json 文件来避免频繁请求 API';
                         throw new Error(errorMsg);
                     }
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -2322,7 +2393,7 @@
                     !file.path.startsWith('.')
                 );
                 
-                // 保存到缓存
+                // 保存文件列表到缓存
                 saveToCache(CACHE_KEY, allFiles);
                 
                 if (allFiles.length === 0) {
@@ -2330,22 +2401,33 @@
                     return;
                 }
                 
+                // 第三步：处理元数据
+                if (metadataIndex) {
+                    // 使用索引文件（快速）
+                    console.log('Using metadata index file');
+                    buildMetadataFromIndex(metadataIndex);
+                } else {
+                    // 回退到逐个解析（慢但兼容）
+                    console.log('No metadata index found, extracting from files...');
+                    loadingEl.textContent = '正在提取元数据...';
+                    await extractAllMetadata();
+                }
+                
+                // 缓存元数据
+                saveToCache(CACHE_METADATA_KEY, {
+                    fileKeywords,
+                    allKeywords,
+                    fileDates,
+                    monthGroups
+                });
+                
                 // 隐藏加载提示，显示文件树
                 loadingEl.style.display = 'none';
                 fileTreeEl.style.display = 'block';
                 
-                // 提取关键词和日期（异步，不阻塞文件列表显示）
-                extractAllMetadata().then(() => {
-                    // 缓存元数据
-                    saveToCache(CACHE_METADATA_KEY, {
-                        fileKeywords,
-                        allKeywords,
-                        fileDates,
-                        monthGroups
-                    });
-                    updateFileList();
-                });
-                
+                // 渲染界面
+                renderKeywordList();
+                renderDateIndex();
                 updateFileList();
                 
             } catch (error) {
@@ -2375,7 +2457,7 @@
             location.reload();
         }
         
-        async function loadFileContent(file) {
+        async function loadFileContent(file, retryCount = 0) {
             const contentLoadingEl = document.getElementById('contentLoading');
             const contentErrorEl = document.getElementById('contentError');
             const markdownContentEl = document.getElementById('markdownContent');
@@ -2389,9 +2471,18 @@
             commentsSectionEl.style.display = 'none';
             document.getElementById('articlesGrid').style.display = 'none';
             contentLoadingEl.style.display = 'block';
-            contentLoadingEl.innerHTML = '正在加载内容...';
+            
+            const maxRetries = 2;
+            const retryDelay = 1000; // 1秒
             
             try {
+                // 显示加载状态
+                if (retryCount > 0) {
+                    contentLoadingEl.innerHTML = `正在重试加载... (${retryCount}/${maxRetries})`;
+                } else {
+                    contentLoadingEl.innerHTML = '正在加载内容...';
+                }
+                
                 // 使用多源获取文件内容
                 const markdown = await fetchFileContent(file.path);
                 
@@ -2445,9 +2536,35 @@
                 
             } catch (error) {
                 console.error('Error loading file:', error);
+                
+                // 自动重试
+                if (retryCount < maxRetries) {
+                    console.log(`Retrying... (${retryCount + 1}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    return loadFileContent(file, retryCount + 1);
+                }
+                
+                // 重试失败，显示错误
                 contentLoadingEl.style.display = 'none';
                 contentErrorEl.style.display = 'block';
-                contentErrorEl.textContent = `加载文件内容失败: ${error.message}`;
+                contentErrorEl.innerHTML = `
+                    <div style="text-align: left;">
+                        <strong>⚠️ 加载失败</strong>
+                        <p style="margin-top: 10px; color: #666;">文件: ${file.path}</p>
+                        <p style="margin-top: 5px; color: #999; font-size: 0.9em;">${error.message}</p>
+                        <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="loadFileContent(${JSON.stringify(file).replace(/"/g, '&quot;')})" 
+                                style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                🔄 重试
+                            </button>
+                            <a href="https://cdn.jsdelivr.net/gh/${getRepoInfo().owner}/${getRepoInfo().repo}@main/${file.path}" 
+                                target="_blank" 
+                                style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block;">
+                                📄 直接查看
+                            </a>
+                        </div>
+                    </div>
+                `;
             }
         }
         
